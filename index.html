@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 美食探險家</title>
-    <!-- 載入 Tailwind CSS 框架 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 載入 Google Fonts 的 Inter 和 Noto Sans TC 字體 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -32,10 +30,8 @@
 </head>
 <body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col items-center p-4 sm:p-8">
 
-    <!-- 主要容器 -->
     <div class="w-full max-w-5xl mx-auto">
         
-        <!-- 標題區 -->
         <header class="text-center mb-10">
             <h1 class="text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-600">
                 美食探險家
@@ -43,10 +39,8 @@
             <p class="text-gray-500 mt-2">為您即時搜尋附近的高分好評店家！</p>
         </header>
 
-        <!-- 搜尋表單區 -->
         <div class="bg-white p-6 rounded-xl shadow-lg mb-12">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- 地區選單 (已擴充) -->
                 <div>
                     <label for="area-select" class="block text-sm font-medium text-gray-600 mb-2">選擇地區</label>
                     <select id="area-select" class="w-full bg-gray-100 border-gray-300 border rounded-md py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
@@ -68,7 +62,6 @@
                         <option value="新北市三重區">新北市 三重區</option>
                     </select>
                 </div>
-                <!-- 美食種類選單 (已擴充) -->
                 <div>
                     <label for="cuisine-select" class="block text-sm font-medium text-gray-600 mb-2">選擇美食種類</label>
                     <select id="cuisine-select" class="w-full bg-gray-100 border-gray-300 border rounded-md py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
@@ -88,30 +81,20 @@
                     </select>
                 </div>
             </div>
-            <!-- 功能優化：僅顯示營業中選項 -->
             <div class="mt-4 flex items-center justify-center">
                 <input id="open-now-checkbox" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                 <label for="open-now-checkbox" class="ml-2 block text-sm text-gray-700 select-none">僅顯示目前營業中店家</label>
             </div>
-             <!-- 搜尋按鈕 (預設為禁用狀態) -->
-            <button id="search-button" class="mt-5 w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all flex items-center justify-center opacity-50 cursor-not-allowed" disabled>
+             <button id="search-button" class="mt-5 w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all flex items-center justify-center opacity-50 cursor-not-allowed" disabled>
                 <span id="button-text">等待地圖服務...</span>
                 <div id="button-loader" class="loader hidden"></div>
             </button>
         </div>
 
-        <!-- 結果顯示區 -->
         <main id="results-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            <!-- 搜尋結果將會動態插入到這裡 -->
-        </main>
+            </main>
     </div>
 
-    <!-- 
-        重要！載入 Google Maps JavaScript API 
-        已將您的 API 金鑰加入下方。
-    -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-Ev8iMdRHstXwwFL2L6JpghYzgGsbiqY&libraries=places&callback=initMap&language=zh-TW" async defer></script>
-    
     <script>
         // 取得頁面上的元素
         const searchButton = document.getElementById('search-button');
@@ -131,13 +114,13 @@
             placesService = new google.maps.places.PlacesService(map);
             console.log('Google Maps Places Service 已準備就緒！');
 
-            // *** FIX: 啟用搜尋按鈕，因為服務已準備好 ***
+            // 啟用搜尋按鈕，因為服務已準備好
             searchButton.disabled = false;
             searchButton.classList.remove('opacity-50', 'cursor-not-allowed');
             buttonText.textContent = '開始搜尋';
         }
 
-        // *** NEW: 增加一個超時檢查，以防API載入失敗 ***
+        // 增加一個超時檢查，以防API載入失敗
         window.setTimeout(() => {
             if (!placesService) {
                 console.error("Google Maps Service failed to load.");
@@ -164,7 +147,6 @@
             const onlyOpen = openNowCheckbox.checked;
 
             if (!placesService) {
-                // 這個情況現在比較不可能發生，但保留以防萬一
                 resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">Google Maps 服務尚未準備好，請稍後再試。</p>`;
                 return;
             }
@@ -311,5 +293,8 @@
         }
 
     </script>
+    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-Ev8iMdRHstXwwFL2L6JpghYzgGsbiqY&libraries=places&callback=initMap&language=zh-TW" async defer></script>
+
 </body>
 </html>
