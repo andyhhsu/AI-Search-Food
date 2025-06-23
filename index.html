@@ -45,6 +45,7 @@
                     <label for="area-select" class="block text-sm font-medium text-gray-600 mb-2">選擇地區</label>
                     <select id="area-select" class="w-full bg-gray-100 border-gray-300 border rounded-md py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                         <option value="current_location" selected>📍 目前位置附近 (步行10分鐘)</option>
+                        <option value="custom_area_input">✏️ 自行輸入地區...</option>
                         <option value="台北市信義區">台北市 信義區</option>
                         <option value="台北市大安區">台北市 大安區</option>
                         <option value="台北市中山區">台北市 中山區</option>
@@ -62,6 +63,9 @@
                         <option value="新北市新店區">新北市 新店區</option>
                         <option value="新北市三重區">新北市 三重區</option>
                     </select>
+                    <div id="custom-area-container" class="hidden mt-2">
+                        <input type="text" id="custom-area-input" placeholder="例如：台北市信義區、日本東京" class="w-full bg-gray-100 border-gray-300 border rounded-md py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
                 </div>
                 <div>
                     <label for="cuisine-select" class="block text-sm font-medium text-gray-600 mb-2">選擇美食種類</label>
@@ -80,12 +84,10 @@
                         <option value="甜點">甜點</option>
                         <option value="麵包店">麵包店</option>
                         <option value="素食">素食</option>
-                        <!-- *** NEW: 新增自訂輸入選項 *** -->
-                        <option value="custom_input">✏️ 自行輸入...</option>
+                        <option value="custom_cuisine_input">✏️ 自行輸入...</option>
                     </select>
-                    <!-- *** NEW: 自訂輸入框 (預設隱藏) *** -->
                     <div id="custom-cuisine-container" class="hidden mt-2">
-                        <input type="text" id="custom-cuisine-input" placeholder="請輸入美食關鍵字，例如：拉麵" class="w-full bg-gray-100 border-gray-300 border rounded-md py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <input type="text" id="custom-cuisine-input" placeholder="例如：拉麵、舒芙蕾、或任何想吃的！" class="w-full bg-gray-100 border-gray-300 border rounded-md py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                     </div>
                 </div>
             </div>
@@ -107,6 +109,8 @@
         const searchButton = document.getElementById('search-button');
         const areaSelect = document.getElementById('area-select');
         const cuisineSelect = document.getElementById('cuisine-select');
+        const customAreaContainer = document.getElementById('custom-area-container');
+        const customAreaInput = document.getElementById('custom-area-input');
         const customCuisineContainer = document.getElementById('custom-cuisine-container');
         const customCuisineInput = document.getElementById('custom-cuisine-input');
         const openNowCheckbox = document.getElementById('open-now-checkbox'); 
@@ -115,13 +119,15 @@
         const buttonLoader = document.getElementById('button-loader');
 
         let placesService;
-        let directionsService; // *** NEW: 用於計算路線和時間
+        let directionsService;
+        let geocoder; // *** NEW: 用於將地址轉為經緯度
         let map; 
 
         function initMap() {
             map = new google.maps.Map(document.createElement('div'));
             placesService = new google.maps.places.PlacesService(map);
-            directionsService = new google.maps.DirectionsService(); // *** NEW: 初始化
+            directionsService = new google.maps.DirectionsService();
+            geocoder = new google.maps.Geocoder(); // *** NEW: 初始化
             console.log('Google Maps Services 已準備就緒！');
 
             searchButton.disabled = false;
@@ -165,10 +171,17 @@
             event.preventDefault();
             searchRestaurants();
         });
+        
+        areaSelect.addEventListener('change', () => {
+            if (areaSelect.value === 'custom_area_input') {
+                customAreaContainer.classList.remove('hidden');
+            } else {
+                customAreaContainer.classList.add('hidden');
+            }
+        });
 
-        // *** NEW: 監聽美食種類選單變化 ***
         cuisineSelect.addEventListener('change', () => {
-            if (cuisineSelect.value === 'custom_input') {
+            if (cuisineSelect.value === 'custom_cuisine_input') {
                 customCuisineContainer.classList.remove('hidden');
             } else {
                 customCuisineContainer.classList.add('hidden');
@@ -176,10 +189,18 @@
         });
 
         async function searchRestaurants() {
-            const area = areaSelect.value;
+            let area = areaSelect.value;
+            if (area === 'custom_area_input') {
+                area = customAreaInput.value.trim();
+                if (area === '') {
+                    resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">請輸入要搜尋的地區。</p>`;
+                    return;
+                }
+            }
+
             let cuisine = cuisineSelect.value;
-            if (cuisine === 'custom_input') {
-                cuisine = customCuisineInput.value.trim(); // 取得自訂輸入的值
+            if (cuisine === 'custom_cuisine_input') {
+                cuisine = customCuisineInput.value.trim();
             }
 
             const onlyOpen = openNowCheckbox.checked;
@@ -194,7 +215,7 @@
 
             const searchQuery = cuisine === "" ? "餐廳" : cuisine;
 
-            if (area === 'current_location') {
+            if (areaSelect.value === 'current_location') {
                 try {
                     resultsContainer.innerHTML = `<div class="col-span-full text-center text-gray-500">正在取得您的目前位置...</div>`; 
                     const location = await getUserLocation();
@@ -208,13 +229,10 @@
             }
         }
         
-        // *** NEW: 搜尋附近地點的專用函式 ***
         async function searchNearby(location, keyword, onlyOpen) {
             const userLatLng = new google.maps.LatLng(location.lat, location.lng);
             const request = {
                 location: userLatLng,
-                // 使用 rankBy: google.maps.places.RankBy.DISTANCE 會忽略 radius，並回傳最近的結果
-                // keyword 是必須的
                 rankBy: google.maps.places.RankBy.DISTANCE,
                 keyword: keyword,
             };
@@ -223,23 +241,19 @@
                 if (status === google.maps.places.PlacesServiceStatus.OK && results) {
                     resultsContainer.innerHTML = `<div class="col-span-full text-center text-gray-500">取得結果... 正在計算步行時間...</div>`;
                     
-                    // 1. 過濾評分
                     let highRatedResults = results.filter(place => place.rating >= 4.0 && place.photos && place.place_id);
 
-                    // 2. 計算距離並過濾時間
                     const distancePromises = highRatedResults.map(place => getWalkingDistance(userLatLng, place.geometry.location));
                     const distances = await Promise.all(distancePromises);
 
                     let resultsWithDistance = highRatedResults
                         .map((place, i) => ({ ...place, distanceData: distances[i] }))
-                        .filter(place => place.distanceData && place.distanceData.durationValue <= 600); // 600秒 = 10分鐘
+                        .filter(place => place.distanceData && place.distanceData.durationValue <= 600); 
 
-                    // 3. 取得詳細資訊
                     if (resultsWithDistance.length > 0) {
                         const detailPromises = resultsWithDistance.map(place => processPlace(place, onlyOpen));
                         let finalResults = (await Promise.all(detailPromises)).filter(data => data !== null);
                         
-                        // 4. 排序與顯示
                         sortAndDisplay(finalResults);
                     } else {
                         resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">附近找不到評分高於 4.0 且步行10分鐘可達的相關餐廳。</p>`;
@@ -251,27 +265,57 @@
             });
         }
         
-        // *** NEW: 搜尋指定地區的專用函式 (原邏輯) ***
+        // *** REVISED: 使用 Geocoding 讓文字搜尋更精準 ***
         async function searchText(area, searchQuery, onlyOpen) {
-            const request = { query: `${area} ${searchQuery}`, fields: ['place_id', 'name', 'rating', 'photos'] };
-            placesService.textSearch(request, async (results, status) => {
-                if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                    const highRatedResults = results.filter(place => place.rating >= 4.0 && place.photos && place.place_id);
-                    if (highRatedResults.length === 0) {
-                        resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">找不到評分高於 4.0 的相關餐廳。</p>`;
-                        showLoading(false); return;
+            try {
+                // 步驟 1: 將地區文字轉換為經緯度
+                const geoResult = await geocodeAddress(area);
+                
+                // 步驟 2: 使用經緯度進行搜尋
+                const request = { 
+                    location: geoResult.location,
+                    radius: 50000, // 搜尋一個大範圍，例如 50公里
+                    query: searchQuery 
+                };
+                
+                placesService.textSearch(request, async (results, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                        const highRatedResults = results.filter(place => place.rating >= 4.0 && place.photos && place.place_id);
+                        if (highRatedResults.length === 0) {
+                            resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">在「${area}」找不到評分高於 4.0 的相關餐廳。</p>`;
+                            showLoading(false); return;
+                        }
+                        const detailPromises = highRatedResults.map(place => processPlace(place, onlyOpen));
+                        let finalResults = (await Promise.all(detailPromises)).filter(data => data !== null);
+                        sortAndDisplay(finalResults);
+                    } else {
+                         resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">在「${area}」搜尋時發生錯誤。錯誤: ${status}</p>`;
                     }
-                    const detailPromises = highRatedResults.map(place => processPlace(place, onlyOpen));
-                    let finalResults = (await Promise.all(detailPromises)).filter(data => data !== null);
-                    sortAndDisplay(finalResults);
-                } else {
-                     resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">搜尋時發生錯誤。錯誤: ${status}</p>`;
-                }
-                 showLoading(false);
+                     showLoading(false);
+                });
+
+            } catch(error) {
+                // Geocoding 失敗
+                resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">${error.message}</p>`;
+                showLoading(false);
+            }
+        }
+        
+        // *** NEW: 將地址轉換為經緯度的輔助函式 ***
+        function geocodeAddress(address) {
+            return new Promise((resolve, reject) => {
+                geocoder.geocode({ 'address': address }, (results, status) => {
+                    if (status === 'OK' && results[0]) {
+                        resolve({
+                            location: results[0].geometry.location
+                        });
+                    } else {
+                        reject(new Error(`無法找到您輸入的地區：「${address}」。請檢查拼寫或輸入更詳細的地址。`));
+                    }
+                });
             });
         }
         
-        // *** NEW: 取得步行距離和時間的函式 ***
         function getWalkingDistance(origin, destination) {
              return new Promise((resolve) => {
                 const request = {
@@ -283,12 +327,11 @@
                     if (status == 'OK' && result.routes[0].legs[0]) {
                         const leg = result.routes[0].legs[0];
                         resolve({
-                            distanceText: leg.distance.text, // e.g., "0.5 km"
-                            durationText: leg.duration.text, // e.g., "7 mins"
-                            durationValue: leg.duration.value // e.g., 420 (in seconds)
+                            distanceText: leg.distance.text,
+                            durationText: leg.duration.text,
+                            durationValue: leg.duration.value
                         });
                     } else {
-                        // 如果路線規劃失敗，回傳 null
                         resolve(null);
                     }
                 });
@@ -302,7 +345,6 @@
                     const isOpen = detailedPlace.opening_hours?.isOpen?.();
                     if (isOpen === false) return null; 
                 }
-                // 將原始的 distanceData 也傳遞下去
                 return { ...detailedPlace, distanceData: place.distanceData }; 
             } catch (error) {
                 console.error(`處理地點 ${place.name} 時發生錯誤:`, error);
@@ -324,7 +366,6 @@
             });
         }
         
-        // *** NEW: 排序與顯示結果的共用函式 ***
         function sortAndDisplay(results) {
             resultsContainer.innerHTML = '';
             results.sort((a, b) => {
@@ -371,14 +412,11 @@
                 hoursInfo = `<p class="text-sm">${statusText} <span class="text-gray-600">${statusText ? ' • ' : ''} ${todayHours || ''}</span></p>`;
             }
             
-            // *** NEW: 顯示步行距離和時間的 HTML ***
             let distanceInfo = '';
             if (place.distanceData) {
                 distanceInfo = `
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                    </svg>
+                <div class="flex items-start">
+                     <svg class="w-5 h-5 mr-2 mt-0.5 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M7.25 1.511l-4.25 2.125a.75.75 0 000 1.328l4.25 2.125a.75.75 0 00.75 0l4.25-2.125a.75.75 0 000-1.328L8 1.511a.75.75 0 00-.75 0zM12.75 5.5a.75.75 0 00-1.5 0v6.5a.75.75 0 001.5 0v-6.5zM8.5 7.011l-4.25 2.125a.75.75 0 000 1.328l4.25 2.125a.75.75 0 00.75 0l4.25-2.125a.75.75 0 000-1.328L9.25 7.01a.75.75 0 00-.75 0z"/></svg>
                     <p class="text-gray-600">${place.distanceData.distanceText}・約 ${place.distanceData.durationText}</p>
                 </div>
                 `;
