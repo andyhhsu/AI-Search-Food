@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>食客地圖</title>
+    <title>AI 美食探險家</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +34,7 @@
         
         <header class="text-center mb-10">
             <h1 class="text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-600">
-                食客地圖
+                美食探險家
             </h1>
             <p class="text-gray-500 mt-2">為您即時搜尋附近的高分好評店家！</p>
         </header>
@@ -120,14 +120,14 @@
 
         let placesService;
         let directionsService;
-        let geocoder; // *** NEW: 用於將地址轉為經緯度
+        let geocoder;
         let map; 
 
         function initMap() {
             map = new google.maps.Map(document.createElement('div'));
             placesService = new google.maps.places.PlacesService(map);
             directionsService = new google.maps.DirectionsService();
-            geocoder = new google.maps.Geocoder(); // *** NEW: 初始化
+            geocoder = new google.maps.Geocoder();
             console.log('Google Maps Services 已準備就緒！');
 
             searchButton.disabled = false;
@@ -265,17 +265,15 @@
             });
         }
         
-        // *** REVISED: 使用 Geocoding 讓文字搜尋更精準 ***
         async function searchText(area, searchQuery, onlyOpen) {
             try {
-                // 步驟 1: 將地區文字轉換為經緯度
                 const geoResult = await geocodeAddress(area);
                 
-                // 步驟 2: 使用經緯度進行搜尋
+                // *** FIX: 將地區(area)重新加入搜尋查詢(query)中，以確保搜尋結果的精確性 ***
                 const request = { 
                     location: geoResult.location,
-                    radius: 50000, // 搜尋一個大範圍，例如 50公里
-                    query: searchQuery 
+                    radius: 50000, 
+                    query: `${area} ${searchQuery}` // 修正後的查詢
                 };
                 
                 placesService.textSearch(request, async (results, status) => {
@@ -295,13 +293,11 @@
                 });
 
             } catch(error) {
-                // Geocoding 失敗
                 resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">${error.message}</p>`;
                 showLoading(false);
             }
         }
         
-        // *** NEW: 將地址轉換為經緯度的輔助函式 ***
         function geocodeAddress(address) {
             return new Promise((resolve, reject) => {
                 geocoder.geocode({ 'address': address }, (results, status) => {
