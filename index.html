@@ -228,14 +228,12 @@
                 }
             } else {
                 let userLocation = null;
-                let locationPermissionDenied = false; // *** NEW: 用於追蹤權限狀態
                 try {
                     userLocation = await getUserLocation();
                 } catch (error) {
-                    locationPermissionDenied = true; // *** NEW: 設定權限失敗的旗標
                     console.warn("無法取得使用者位置以計算距離:", error.message);
                 }
-                await searchText(area, searchQuery, onlyOpen, userLocation, locationPermissionDenied);
+                await searchText(area, searchQuery, onlyOpen, userLocation);
             }
         }
         
@@ -246,6 +244,10 @@
                 rankBy: google.maps.places.RankBy.DISTANCE,
                 keyword: keyword,
             };
+            // *** FIX: 新增 openNow 參數 ***
+            if (onlyOpen) {
+                request.openNow = true;
+            }
 
             placesService.nearbySearch(request, async (results, status) => {
                 if (status === google.maps.places.PlacesServiceStatus.OK && results) {
@@ -266,7 +268,10 @@
                         
                         sortAndDisplay(finalResults);
                     } else {
-                        resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">附近找不到評分高於 4.0 且步行10分鐘可達的相關餐廳。</p>`;
+                        const message = onlyOpen 
+                            ? "附近找不到評分高於 4.0、正在營業且步行10分鐘可達的相關餐廳。" 
+                            : "附近找不到評分高於 4.0 且步行10分鐘可達的相關餐廳。";
+                        resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">${message}</p>`;
                     }
                 } else {
                     resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">搜尋時發生錯誤，或附近沒有符合條件的店家。錯誤: ${status}</p>`;
@@ -275,7 +280,7 @@
             });
         }
         
-        async function searchText(area, searchQuery, onlyOpen, userLocation, locationPermissionDenied) {
+        async function searchText(area, searchQuery, onlyOpen, userLocation) {
             try {
                 const geoResult = await geocodeAddress(area);
                 
@@ -284,33 +289,40 @@
                     radius: 50000, 
                     query: `${area} ${searchQuery}`
                 };
+                // *** FIX: 新增 openNow 參數 ***
+                if (onlyOpen) {
+                    request.openNow = true;
+                }
                 
                 placesService.textSearch(request, async (results, status) => {
                     if (status === google.maps.places.PlacesServiceStatus.OK && results) {
                         let highRatedResults = results.filter(place => place.rating >= 4.0 && place.photos && place.place_id);
+                        
+                        if (areaSelect.value !== 'custom_area_input') {
+                             highRatedResults = highRatedResults.filter(place => place.formatted_address && place.formatted_address.includes(area));
+                        }
+                        
                         if (highRatedResults.length === 0) {
-                            resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">在「${area}」找不到評分高於 4.0 的相關餐廳。</p>`;
+                            const message = onlyOpen
+                                ? `在「${area}」找不到評分高於 4.0 且正在營業的相關餐廳。`
+                                : `在「${area}」找不到評分高於 4.0 的相關餐廳。`;
+                            resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">${message}</p>`;
                             showLoading(false); return;
                         }
 
                         if (userLocation) {
-                            resultsContainer.innerHTML = `<div class="col-span-full text-center text-gray-500">取得結果... 正在計算步行時間...</div>`;
+                            resultsContainer.innerHTML = `<div class="col-span-full text-center text-gray-500">取得結果... 正在計算直線距離...</div>`;
                             const userLatLng = new google.maps.LatLng(userLocation.lat, userLocation.lng);
-                            const distancePromises = highRatedResults.map(place => getWalkingDistance(userLatLng, place.geometry.location));
-                            const distances = await Promise.all(distancePromises);
-                            highRatedResults = highRatedResults.map((place, i) => ({ ...place, distanceData: distances[i] }));
+                            highRatedResults = highRatedResults.map(place => {
+                                const placeLatLng = place.geometry.location;
+                                const distanceInMeters = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, placeLatLng);
+                                const distanceText = distanceInMeters > 1000 ? `${(distanceInMeters / 1000).toFixed(1)} 公里` : `${Math.round(distanceInMeters)} 公尺`;
+                                return { ...place, distanceData: { distanceText: `直線距離 ${distanceText}` } };
+                            });
                         }
 
                         const detailPromises = highRatedResults.map(place => processPlace(place, onlyOpen));
                         let finalResults = (await Promise.all(detailPromises)).filter(data => data !== null);
-                        
-                        // *** NEW: 如果權限被拒絕，則在結果前顯示提示訊息 ***
-                        if (locationPermissionDenied) {
-                            const permissionMessage = document.createElement('div');
-                            permissionMessage.className = "col-span-full text-center text-sm text-gray-500 -mt-4 mb-4 p-2 bg-yellow-100 rounded-lg";
-                            permissionMessage.innerHTML = `💡 提示：允許網站讀取您的位置，即可顯示各餐廳的距離與步行時間。請點擊網址列的 🔒 圖示檢查設定。`;
-                            resultsContainer.prepend(permissionMessage);
-                        }
                         
                         sortAndDisplay(finalResults);
 
@@ -365,9 +377,13 @@
         async function processPlace(place, onlyOpen) {
             try {
                 const detailedPlace = await getPlaceDetails(place.place_id);
+                // *** FIX: 更嚴格的營業狀態檢查 ***
                 if (onlyOpen) {
-                    const isOpen = detailedPlace.opening_hours?.isOpen?.();
-                    if (isOpen === false) return null; 
+                    // 如果勾選了「僅營業中」，則只保留明確回報為 true 的店家
+                    // isOpen() 回傳 true, false, 或 undefined
+                    if (detailedPlace.opening_hours?.isOpen() !== true) {
+                        return null; 
+                    }
                 }
                 return { ...detailedPlace, distanceData: place.distanceData }; 
             } catch (error) {
@@ -380,7 +396,7 @@
             return new Promise((resolve, reject) => {
                 const request = {
                     placeId: placeId,
-                    fields: ['name', 'rating', 'user_ratings_total', 'formatted_address', 'photos', 'place_id', 'opening_hours', 'url']
+                    fields: ['name', 'rating', 'user_ratings_total', 'formatted_address', 'photos', 'place_id', 'opening_hours', 'url', 'price_level']
                 };
                 placesService.getDetails(request, (place, status) => {
                     if (status === google.maps.places.PlacesServiceStatus.OK && place) {
@@ -391,12 +407,7 @@
         }
         
         function sortAndDisplay(results) {
-            // 清除現有內容，但不包含提示訊息
-            Array.from(resultsContainer.children).forEach(child => {
-                if (!child.classList.contains('bg-yellow-100')) {
-                    resultsContainer.removeChild(child);
-                }
-            });
+            resultsContainer.innerHTML = '';
             
             results.sort((a, b) => {
                 const reviewsB = b.user_ratings_total || 0;
@@ -444,15 +455,47 @@
             
             let distanceInfo = '';
             if (place.distanceData) {
+                const displayText = place.distanceData.durationText 
+                    ? `${place.distanceData.distanceText}・約 ${place.distanceData.durationText}` 
+                    : place.distanceData.distanceText;
+                    
                 distanceInfo = `
                 <div class="flex items-start">
-                     <!-- *** NEW: 更換為步行圖示 *** -->
                      <svg class="w-5 h-5 mr-2 mt-0.5 text-gray-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M14.5,4A1.5,1.5 0 0,0 13,5.5A1.5,1.5 0 0,0 14.5,7A1.5,1.5 0 0,0 16,5.5A1.5,1.5 0 0,0 14.5,4M11.5,9L9,14.5V22H11V16H12V13.5L14.5,12L15.6,12.5L11.5,9Z" />
                      </svg>
-                    <p class="text-gray-600">${place.distanceData.distanceText}・約 ${place.distanceData.durationText}</p>
+                    <p class="text-gray-600">${displayText}</p>
                 </div>
                 `;
+            }
+
+            let priceLevelInfo = '';
+            if (place.price_level !== undefined && place.price_level !== null) {
+                let priceText = '';
+                switch (place.price_level) {
+                    case 1:
+                        priceText = '平價';
+                        break;
+                    case 2:
+                        priceText = '中等價位';
+                        break;
+                    case 3:
+                        priceText = '高價位';
+                        break;
+                    case 4:
+                        priceText = '奢華饗宴';
+                        break;
+                }
+                if (priceText) {
+                    priceLevelInfo = `
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 mr-2 mt-0.5 text-gray-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-gray-600">價位：${priceText}</p>
+                    </div>
+                    `;
+                }
             }
 
             card.innerHTML = `
@@ -474,6 +517,7 @@
                             <svg class="w-5 h-5 mr-2 mt-0.5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             ${hoursInfo}
                         </div>
+                        ${priceLevelInfo}
                         ${distanceInfo}
                     </div>
                 </div>
@@ -490,7 +534,7 @@
 
     </script>
     
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-Ev8iMdRHstXwwFL2L6JpghYzgGsbiqY&libraries=places&callback=initMap&language=zh-TW" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-Ev8iMdRHstXwwFL2L6JpghYzgGsbiqY&libraries=places,geometry&callback=initMap&language=zh-TW" async defer></script>
 
 </body>
 </html>
