@@ -80,7 +80,13 @@
                         <option value="甜點">甜點</option>
                         <option value="麵包店">麵包店</option>
                         <option value="素食">素食</option>
+                        <!-- *** NEW: 新增自訂輸入選項 *** -->
+                        <option value="custom_input">✏️ 自行輸入...</option>
                     </select>
+                    <!-- *** NEW: 自訂輸入框 (預設隱藏) *** -->
+                    <div id="custom-cuisine-container" class="hidden mt-2">
+                        <input type="text" id="custom-cuisine-input" placeholder="請輸入美食關鍵字，例如：拉麵" class="w-full bg-gray-100 border-gray-300 border rounded-md py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
                 </div>
             </div>
             <div class="mt-4 flex items-center justify-center">
@@ -101,18 +107,22 @@
         const searchButton = document.getElementById('search-button');
         const areaSelect = document.getElementById('area-select');
         const cuisineSelect = document.getElementById('cuisine-select');
+        const customCuisineContainer = document.getElementById('custom-cuisine-container');
+        const customCuisineInput = document.getElementById('custom-cuisine-input');
         const openNowCheckbox = document.getElementById('open-now-checkbox'); 
         const resultsContainer = document.getElementById('results-container');
         const buttonText = document.getElementById('button-text');
         const buttonLoader = document.getElementById('button-loader');
 
         let placesService;
+        let directionsService; // *** NEW: 用於計算路線和時間
         let map; 
 
         function initMap() {
             map = new google.maps.Map(document.createElement('div'));
             placesService = new google.maps.places.PlacesService(map);
-            console.log('Google Maps Places Service 已準備就緒！');
+            directionsService = new google.maps.DirectionsService(); // *** NEW: 初始化
+            console.log('Google Maps Services 已準備就緒！');
 
             searchButton.disabled = false;
             searchButton.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -156,9 +166,22 @@
             searchRestaurants();
         });
 
+        // *** NEW: 監聽美食種類選單變化 ***
+        cuisineSelect.addEventListener('change', () => {
+            if (cuisineSelect.value === 'custom_input') {
+                customCuisineContainer.classList.remove('hidden');
+            } else {
+                customCuisineContainer.classList.add('hidden');
+            }
+        });
+
         async function searchRestaurants() {
             const area = areaSelect.value;
-            const cuisine = cuisineSelect.value;
+            let cuisine = cuisineSelect.value;
+            if (cuisine === 'custom_input') {
+                cuisine = customCuisineInput.value.trim(); // 取得自訂輸入的值
+            }
+
             const onlyOpen = openNowCheckbox.checked;
 
             if (!placesService) {
@@ -169,89 +192,118 @@
             showLoading(true);
             resultsContainer.innerHTML = `<div class="col-span-full text-center text-gray-500">正在努力搜尋中，請稍候...</div>`; 
 
-            // *** FIX: 處理「所有美食」的搜尋邏輯 ***
-            // 如果美食種類為空（即選擇"所有美食"），則使用通用詞"餐廳"進行搜尋
             const searchQuery = cuisine === "" ? "餐廳" : cuisine;
 
-            let request;
-            
             if (area === 'current_location') {
                 try {
                     resultsContainer.innerHTML = `<div class="col-span-full text-center text-gray-500">正在取得您的目前位置...</div>`; 
                     const location = await getUserLocation();
-                    const userLatLng = new google.maps.LatLng(location.lat, location.lng);
-                    request = {
-                        location: userLatLng,
-                        radius: 800,
-                        query: searchQuery, // 使用處理過的搜尋關鍵字
-                    };
+                    await searchNearby(location, searchQuery, onlyOpen);
                 } catch (error) {
                     resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">${error.message}</p>`;
                     showLoading(false);
-                    return;
                 }
             } else {
-                request = {
-                    query: `${area} ${searchQuery}`, // 使用處理過的搜尋關鍵字
-                    fields: ['place_id', 'name', 'rating', 'photos'],
-                };
+                await searchText(area, searchQuery, onlyOpen);
             }
-            
-            // 注意: nearbySearch 對於半徑搜尋可能更適合，但 textSearch 更通用於關鍵字搜尋
-            placesService.textSearch(request, async (results, status) => {
+        }
+        
+        // *** NEW: 搜尋附近地點的專用函式 ***
+        async function searchNearby(location, keyword, onlyOpen) {
+            const userLatLng = new google.maps.LatLng(location.lat, location.lng);
+            const request = {
+                location: userLatLng,
+                // 使用 rankBy: google.maps.places.RankBy.DISTANCE 會忽略 radius，並回傳最近的結果
+                // keyword 是必須的
+                rankBy: google.maps.places.RankBy.DISTANCE,
+                keyword: keyword,
+            };
+
+            placesService.nearbySearch(request, async (results, status) => {
                 if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                    const highRatedResults = results.filter(place => place.rating >= 4.0 && place.photos && place.place_id);
+                    resultsContainer.innerHTML = `<div class="col-span-full text-center text-gray-500">取得結果... 正在計算步行時間...</div>`;
                     
-                    if(highRatedResults.length === 0) {
-                        resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">找不到評分高於 4.0 的相關餐廳，請試試其他關鍵字。</p>`;
-                        showLoading(false);
-                        return;
-                    }
-                    
-                    const cardDataPromises = highRatedResults.map(place => processPlace(place, onlyOpen));
-                    const cardDataList = await Promise.all(cardDataPromises);
-                    
-                    resultsContainer.innerHTML = '';
-                    
-                    const validCards = cardDataList.filter(data => data !== null);
-                    
-                    validCards.sort((a, b) => {
-                        const reviewsB = b.user_ratings_total || 0;
-                        const reviewsA = a.user_ratings_total || 0;
-                        if (reviewsB !== reviewsA) {
-                            return reviewsB - reviewsA;
-                        }
-                        return (b.rating || 0) - (a.rating || 0);
-                    });
+                    // 1. 過濾評分
+                    let highRatedResults = results.filter(place => place.rating >= 4.0 && place.photos && place.place_id);
 
-                    if (validCards.length > 0) {
-                        validCards.forEach(data => {
-                            const card = createRestaurantCard(data);
-                            resultsContainer.appendChild(card);
-                        });
+                    // 2. 計算距離並過濾時間
+                    const distancePromises = highRatedResults.map(place => getWalkingDistance(userLatLng, place.geometry.location));
+                    const distances = await Promise.all(distancePromises);
+
+                    let resultsWithDistance = highRatedResults
+                        .map((place, i) => ({ ...place, distanceData: distances[i] }))
+                        .filter(place => place.distanceData && place.distanceData.durationValue <= 600); // 600秒 = 10分鐘
+
+                    // 3. 取得詳細資訊
+                    if (resultsWithDistance.length > 0) {
+                        const detailPromises = resultsWithDistance.map(place => processPlace(place, onlyOpen));
+                        let finalResults = (await Promise.all(detailPromises)).filter(data => data !== null);
+                        
+                        // 4. 排序與顯示
+                        sortAndDisplay(finalResults);
                     } else {
-                        const message = onlyOpen ? "抱歉，目前找不到「營業中」且評分高於 4.0 的相關餐廳。" : "找不到任何相關餐廳。";
-                        resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">${message}</p>`;
+                        resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">附近找不到評分高於 4.0 且步行10分鐘可達的相關餐廳。</p>`;
                     }
-
                 } else {
-                    resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">搜尋時發生錯誤，請確認您的 API 金鑰是否正確、已啟用 Places API 並連結有效帳單。 錯誤訊息: ${status}</p>`;
+                    resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">搜尋時發生錯誤，或附近沒有符合條件的店家。錯誤: ${status}</p>`;
                 }
                 showLoading(false);
             });
         }
         
+        // *** NEW: 搜尋指定地區的專用函式 (原邏輯) ***
+        async function searchText(area, searchQuery, onlyOpen) {
+            const request = { query: `${area} ${searchQuery}`, fields: ['place_id', 'name', 'rating', 'photos'] };
+            placesService.textSearch(request, async (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                    const highRatedResults = results.filter(place => place.rating >= 4.0 && place.photos && place.place_id);
+                    if (highRatedResults.length === 0) {
+                        resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">找不到評分高於 4.0 的相關餐廳。</p>`;
+                        showLoading(false); return;
+                    }
+                    const detailPromises = highRatedResults.map(place => processPlace(place, onlyOpen));
+                    let finalResults = (await Promise.all(detailPromises)).filter(data => data !== null);
+                    sortAndDisplay(finalResults);
+                } else {
+                     resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">搜尋時發生錯誤。錯誤: ${status}</p>`;
+                }
+                 showLoading(false);
+            });
+        }
+        
+        // *** NEW: 取得步行距離和時間的函式 ***
+        function getWalkingDistance(origin, destination) {
+             return new Promise((resolve) => {
+                const request = {
+                    origin: origin,
+                    destination: destination,
+                    travelMode: 'WALKING'
+                };
+                directionsService.route(request, (result, status) => {
+                    if (status == 'OK' && result.routes[0].legs[0]) {
+                        const leg = result.routes[0].legs[0];
+                        resolve({
+                            distanceText: leg.distance.text, // e.g., "0.5 km"
+                            durationText: leg.duration.text, // e.g., "7 mins"
+                            durationValue: leg.duration.value // e.g., 420 (in seconds)
+                        });
+                    } else {
+                        // 如果路線規劃失敗，回傳 null
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
         async function processPlace(place, onlyOpen) {
             try {
                 const detailedPlace = await getPlaceDetails(place.place_id);
                 if (onlyOpen) {
                     const isOpen = detailedPlace.opening_hours?.isOpen?.();
-                    if (isOpen === false) {
-                        console.log(`已過濾休息中店家: ${detailedPlace.name}`);
-                        return null; 
-                    }
+                    if (isOpen === false) return null; 
                 }
-                return detailedPlace; 
+                // 將原始的 distanceData 也傳遞下去
+                return { ...detailedPlace, distanceData: place.distanceData }; 
             } catch (error) {
                 console.error(`處理地點 ${place.name} 時發生錯誤:`, error);
                 return null; 
@@ -267,13 +319,33 @@
                 placesService.getDetails(request, (place, status) => {
                     if (status === google.maps.places.PlacesServiceStatus.OK && place) {
                         resolve(place);
-                    } else {
-                        reject(new Error(`無法獲取地點詳細資訊: ${status}`));
-                    }
+                    } else { reject(new Error(`無法獲取地點詳細資訊: ${status}`)); }
                 });
             });
         }
         
+        // *** NEW: 排序與顯示結果的共用函式 ***
+        function sortAndDisplay(results) {
+            resultsContainer.innerHTML = '';
+            results.sort((a, b) => {
+                const reviewsB = b.user_ratings_total || 0;
+                const reviewsA = a.user_ratings_total || 0;
+                if (reviewsB !== reviewsA) {
+                    return reviewsB - reviewsA;
+                }
+                return (b.rating || 0) - (a.rating || 0);
+            });
+
+            if (results.length > 0) {
+                results.forEach(data => {
+                    const card = createRestaurantCard(data);
+                    resultsContainer.appendChild(card);
+                });
+            } else {
+                 resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">找不到符合所有條件的餐廳。</p>`;
+            }
+        }
+
         function createRestaurantCard(place) {
             const card = document.createElement('div');
             card.className = "bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col";
@@ -298,6 +370,19 @@
                 }
                 hoursInfo = `<p class="text-sm">${statusText} <span class="text-gray-600">${statusText ? ' • ' : ''} ${todayHours || ''}</span></p>`;
             }
+            
+            // *** NEW: 顯示步行距離和時間的 HTML ***
+            let distanceInfo = '';
+            if (place.distanceData) {
+                distanceInfo = `
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                    </svg>
+                    <p class="text-gray-600">${place.distanceData.distanceText}・約 ${place.distanceData.durationText}</p>
+                </div>
+                `;
+            }
 
             card.innerHTML = `
                 <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="block">
@@ -318,6 +403,7 @@
                             <svg class="w-5 h-5 mr-2 mt-0.5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             ${hoursInfo}
                         </div>
+                        ${distanceInfo}
                     </div>
                 </div>
             `;
