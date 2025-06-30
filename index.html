@@ -2,8 +2,8 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>美食探險家</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 美食探險家</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,16 +31,19 @@
             border-width: 3px;
         }
         @keyframes card-fade-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         .card-animation {
             animation: card-fade-in 0.5s ease-out forwards;
             opacity: 0;
         }
-        /* Modal Styles */
-        #selection-modal-overlay { transition: opacity 0.3s ease-in-out; }
-        #selection-modal-content { transition: transform 0.3s ease-in-out; }
     </style>
 </head>
 <body class="text-gray-800 min-h-screen flex flex-col items-center p-4 sm:p-8">
@@ -57,18 +60,53 @@
         <div id="search-form-container" class="bg-white p-6 rounded-2xl shadow-lg mb-12 transition-opacity duration-300">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">地區</label>
-                    <button id="area-select-trigger" class="w-full bg-gray-100 border-gray-300 border rounded-lg py-3 px-4 text-gray-800 text-left flex justify-between items-center">
-                        <span id="area-display-text">📍 目前位置附近 (步行10分鐘)</span>
-                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                    </button>
+                    <label for="area-select" class="block text-sm font-medium text-gray-700 mb-2">地區</label>
+                    <select id="area-select" class="w-full bg-gray-100 border-gray-300 border rounded-lg py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <option value="current_location" selected>📍 目前位置附近 (步行10分鐘)</option>
+                        <option value="custom_area_input">✏️ 自行輸入地區...</option>
+                        <option value="台北市信義區">台北市 信義區</option>
+                        <option value="台北市大安區">台北市 大安區</option>
+                        <option value="台北市中山區">台北市 中山區</option>
+                        <option value="台北市松山區">台北市 松山區</option>
+                        <option value="台北市中正區">台北市 中正區</option>
+                        <option value="台北市萬華區">台北市 萬華區</option>
+                        <option value="台北市內湖區">台北市 內湖區</option>
+                        <option value="台北市士林區">台北市 士林區</option>
+                        <option value="台北市大同區">台北市 大同區</option>
+                        <option value="台北市文山區">台北市 文山區</option>
+                        <option value="新北市板橋區">新北市 板橋區</option>
+                        <option value="新北市中和區">新北市 中和區</option>
+                        <option value="新北市永和區">新北市 永和區</option>
+                        <option value="新北市新莊區">新北市 新莊區</option>
+                        <option value="新北市新店區">新北市 新店區</option>
+                        <option value="新北市三重區">新北市 三重區</option>
+                    </select>
+                    <div id="custom-area-container" class="hidden mt-2">
+                        <input type="text" id="custom-area-input" placeholder="例如：台北市信義區、日本東京" class="w-full bg-gray-100 border-gray-300 border rounded-lg py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">美食種類</label>
-                     <button id="cuisine-select-trigger" class="w-full bg-gray-100 border-gray-300 border rounded-lg py-3 px-4 text-gray-800 text-left flex justify-between items-center">
-                        <span id="cuisine-display-text">所有美食</span>
-                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                    </button>
+                    <label for="cuisine-select" class="block text-sm font-medium text-gray-700 mb-2">美食種類</label>
+                    <select id="cuisine-select" class="w-full bg-gray-100 border-gray-300 border rounded-lg py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <option value="">所有美食</option>
+                        <option value="牛肉麵">牛肉麵</option>
+                        <option value="火鍋">火鍋</option>
+                        <option value="日式料理">日式料理</option>
+                        <option value="韓式料理">韓式料理</option>
+                        <option value="義大利麵">義大利麵</option>
+                        <option value="美式漢堡">美式漢堡</option>
+                        <option value="泰式料理">泰式料理</option>
+                        <option value="咖啡廳">咖啡廳</option>
+                        <option value="早午餐">早午餐</option>
+                        <option value="小吃">小吃</option>
+                        <option value="甜點">甜點</option>
+                        <option value="麵包店">麵包店</option>
+                        <option value="素食">素食</option>
+                        <option value="custom_cuisine_input">✏️ 自行輸入...</option>
+                    </select>
+                    <div id="custom-cuisine-container" class="hidden mt-2">
+                        <input type="text" id="custom-cuisine-input" placeholder="例如：拉麵、舒芙蕾、或任何想吃的！" class="w-full bg-gray-100 border-gray-300 border rounded-lg py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
                 </div>
             </div>
             <div class="mt-6 flex items-center justify-center">
@@ -85,65 +123,40 @@
         </main>
         
         <div id="pagination-container" class="w-full flex justify-center mt-8"></div>
-    </div>
-    
-    <div id="selection-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden opacity-0">
-        <div id="selection-modal-content" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 transform translate-y-full max-h-[80vh] flex flex-col">
-            <div class="flex-shrink-0 flex justify-between items-center pb-2 border-b border-gray-200">
-                <h2 id="modal-title" class="text-xl font-bold">選擇</h2>
-                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-700">
-                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-            </div>
-            <div id="modal-options-container" class="py-2 overflow-y-auto">
-            </div>
-            <div id="modal-input-container" class="hidden p-2 border-t border-gray-200">
-                 <input type="text" id="modal-custom-input" class="w-full bg-gray-100 border-gray-300 border rounded-lg py-3 px-4 text-gray-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                 <button id="modal-confirm-btn" class="mt-2 w-full text-white font-bold py-3 px-4 rounded-lg shadow-lg" style="background-color: var(--primary-color);">確認</button>
-            </div>
-        </div>
+
     </div>
 
     <script>
-        // DOM Elements
         const searchButton = document.getElementById('search-button');
         const searchFormContainer = document.getElementById('search-form-container');
-        const areaSelectTrigger = document.getElementById('area-select-trigger');
-        const cuisineSelectTrigger = document.getElementById('cuisine-select-trigger');
-        const areaDisplayText = document.getElementById('area-display-text');
-        const cuisineDisplayText = document.getElementById('cuisine-display-text');
+        const areaSelect = document.getElementById('area-select');
+        const cuisineSelect = document.getElementById('cuisine-select');
+        const customAreaContainer = document.getElementById('custom-area-container');
+        const customAreaInput = document.getElementById('custom-area-input');
+        const customCuisineContainer = document.getElementById('custom-cuisine-container');
+        const customCuisineInput = document.getElementById('custom-cuisine-input');
         const openNowCheckbox = document.getElementById('open-now-checkbox'); 
         const resultsContainer = document.getElementById('results-container');
         const buttonText = document.getElementById('button-text');
         const buttonLoader = document.getElementById('button-loader');
         const paginationContainer = document.getElementById('pagination-container');
-        const modalOverlay = document.getElementById('selection-modal-overlay');
-        const modalContent = document.getElementById('selection-modal-content');
-        const modalTitle = document.getElementById('modal-title');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const modalOptionsContainer = document.getElementById('modal-options-container');
-        const modalInputContainer = document.getElementById('modal-input-container');
-        const modalCustomInput = document.getElementById('modal-custom-input');
-        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
 
-        // Global state
-        let placesService, directionsService, geocoder, map; 
-        let allFetchedPlaces = [], displayedCount = 0;
-        const RESULTS_PER_PAGE = 21; 
-        let currentSelections = { area: 'current_location', cuisine: '' };
-        let activeModal = null;
+        let placesService;
+        let directionsService;
+        let geocoder;
+        let map; 
+        
+        let allFetchedPlaces = []; 
+        let displayedCount = 0;
+        const RESULTS_PER_PAGE = 21;
 
-        // Init Google Maps Services
         function initMap() {
             map = new google.maps.Map(document.createElement('div'));
             placesService = new google.maps.places.PlacesService(map);
             directionsService = new google.maps.DirectionsService();
             geocoder = new google.maps.Geocoder();
             console.log('Google Maps Services 已準備就緒！');
-            enableSearchButton();
-        }
 
-        function enableSearchButton() {
             searchButton.disabled = false;
             searchButton.classList.remove('opacity-50', 'cursor-not-allowed');
             searchButton.style.backgroundColor = 'var(--primary-color)';
@@ -161,8 +174,7 @@
                 searchButton.classList.add('cursor-not-allowed');
             }
         }, 5000);
-        
-        // *** FIX: Added missing function ***
+
         function getUserLocation() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
@@ -184,116 +196,50 @@
             });
         }
 
-
-        // Modal Logic
-        function openModal(type, title, options, customOptionValue) {
-            activeModal = type;
-            modalTitle.textContent = title;
-            modalOptionsContainer.innerHTML = '';
-            modalInputContainer.classList.add('hidden');
-
-            options.forEach(opt => {
-                const optionEl = document.createElement('div');
-                optionEl.className = 'p-4 text-lg cursor-pointer hover:bg-gray-100 rounded-lg';
-                optionEl.textContent = opt.text;
-                optionEl.dataset.value = opt.value;
-                optionEl.addEventListener('click', () => {
-                    if (opt.value === customOptionValue) {
-                        modalOptionsContainer.classList.add('hidden');
-                        modalInputContainer.classList.remove('hidden');
-                        modalCustomInput.value = '';
-                        modalCustomInput.placeholder = `例如：${opt.text === '✏️ 自行輸入地區...' ? '台北市信義區、日本東京' : '拉麵、舒芙蕾'}`;
-                        modalCustomInput.focus();
-                    } else {
-                        updateSelection(type, opt.value, opt.text);
-                        closeModal();
-                    }
-                });
-                modalOptionsContainer.appendChild(optionEl);
-            });
-            
-            modalOptionsContainer.classList.remove('hidden');
-            modalOverlay.classList.remove('hidden');
-            setTimeout(() => {
-                modalOverlay.classList.remove('opacity-0');
-                modalContent.classList.remove('translate-y-full');
-            }, 10);
-        }
-
-        function closeModal() {
-            modalOverlay.classList.add('opacity-0');
-            modalContent.classList.add('translate-y-full');
-            setTimeout(() => modalOverlay.classList.add('hidden'), 300);
-        }
-
-        function updateSelection(type, value, text) {
-             if (type === 'area') {
-                currentSelections.area = value;
-                areaDisplayText.textContent = text;
-            } else {
-                currentSelections.cuisine = value;
-                cuisineDisplayText.textContent = text;
-            }
-        }
-        
-        modalConfirmBtn.addEventListener('click', () => {
-            const inputValue = modalCustomInput.value.trim();
-            if (inputValue) {
-                updateSelection(activeModal, inputValue, inputValue);
-                closeModal();
-            }
-        });
-
-        // Event Listeners
         searchButton.addEventListener('click', (event) => {
             event.preventDefault();
-            searchRestaurants();
-        });
-
-        areaSelectTrigger.addEventListener('click', () => {
-             const options = [
-                { text: '📍 目前位置附近 (步行10分鐘)', value: 'current_location' },
-                { text: '✏️ 自行輸入地區...', value: 'custom_area_input' },
-                { text: '台北市 信義區', value: '台北市信義區' }, { text: '台北市 大安區', value: '台北市大安區' },
-                { text: '台北市 中山區', value: '台北市中山區' }, { text: '台北市 松山區', value: '台北市松山區' },
-                { text: '台北市 中正區', value: '台北市中正區' }, { text: '台北市 萬華區', value: '台北市萬華區' },
-                { text: '台北市 內湖區', value: '台北市內湖區' }, { text: '台北市 士林區', value: '台北市士林區' },
-                { text: '台北市 大同區', value: '台北市大同區' }, { text: '台北市 文山區', value: '台北市文山區' },
-                { text: '新北市 板橋區', value: '新北市板橋區' }, { text: '新北市 中和區', value: '新北市中和區' },
-                { text: '新北市 永和區', value: '新北市永和區' }, { text: '新北市 新莊區', value: '新北市新莊區' },
-                { text: '新北市 新店區', value: '新北市新店區' }, { text: '新北市 三重區', value: '新北市三重區' }
-            ];
-            openModal('area', '選擇地區', options, 'custom_area_input');
-        });
-
-        cuisineSelectTrigger.addEventListener('click', () => {
-            const options = [
-                { text: '所有美食', value: '' }, { text: '牛肉麵', value: '牛肉麵' },
-                { text: '火鍋', value: '火鍋' }, { text: '日式料理', value: '日式料理' },
-                { text: '韓式料理', value: '韓式料理' }, { text: '義大利麵', value: '義大利麵' },
-                { text: '美式漢堡', value: '美式漢堡' }, { text: '泰式料理', value: '泰式料理' },
-                { text: '咖啡廳', value: '咖啡廳' }, { text: '早午餐', value: '早午餐' },
-                { text: '小吃', value: '小吃' }, { text: '甜點', value: '甜點' },
-                { text: '麵包店', value: '麵包店' }, { text: '素食', value: '素食' },
-                { text: '✏️ 自行輸入...', value: 'custom_cuisine_input' }
-            ];
-            openModal('cuisine', '選擇美食種類', options, 'custom_cuisine_input');
+            searchRestaurants(); 
         });
         
-        closeModalBtn.addEventListener('click', closeModal);
-        modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+        areaSelect.addEventListener('change', () => {
+            if (areaSelect.value === 'custom_area_input') {
+                customAreaContainer.classList.remove('hidden');
+                customAreaInput.focus();
+            } else {
+                customAreaContainer.classList.add('hidden');
+            }
+        });
 
-
-        // --- Main Search Logic ---
+        cuisineSelect.addEventListener('change', () => {
+            if (cuisineSelect.value === 'custom_cuisine_input') {
+                customCuisineContainer.classList.remove('hidden');
+                customCuisineInput.focus();
+            } else {
+                customCuisineContainer.classList.add('hidden');
+            }
+        });
+        
         async function searchRestaurants() {
             resultsContainer.innerHTML = ''; 
             paginationContainer.innerHTML = ''; 
             allFetchedPlaces = []; 
             displayedCount = 0;
-            
+
+            let area = areaSelect.value;
+            if (area === 'custom_area_input') {
+                area = customAreaInput.value.trim();
+                if (area === '') {
+                    resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">請輸入要搜尋的地區。</p>`;
+                    return;
+                }
+            }
+
             const onlyOpen = openNowCheckbox.checked;
 
-            if (!placesService) { /* ... error handling ... */ return; }
+            if (!placesService) {
+                resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">Google Maps 服務尚未準備就緒，請稍後再試。</p>`;
+                return;
+            }
 
             showLoading(true);
             resultsContainer.innerHTML = `<div class="col-span-full text-center text-gray-500">正在努力搜尋中，請稍候...</div>`; 
@@ -304,12 +250,12 @@
                     return null;
                 });
 
-                const allRawResults = await fetchAllResults(currentSelections.area, onlyOpen, userLocation);
+                const allRawResults = await fetchAllResults(area, onlyOpen, userLocation);
                 
-                if (allRawResults.length === 0) { 
-                    resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">找不到符合條件的餐廳。</p>`;
-                    showLoading(false);
-                    return;
+                if (allRawResults.length === 0) {
+                     resultsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">找不到符合條件的餐廳。</p>`;
+                     showLoading(false);
+                     return;
                 }
                 
                 resultsContainer.innerHTML = `<div class="col-span-full text-center text-gray-500">取得 ${allRawResults.length} 筆結果... 正在處理詳細資訊...</div>`;
@@ -320,12 +266,13 @@
 
                 processedPlaces = processedPlaces.filter(p => p !== null);
                 processedPlaces.sort((a, b) => (b.user_ratings_total || 0) - (a.user_ratings_total || 0) || (b.rating || 0) - (a.rating || 0));
+                
                 allFetchedPlaces = processedPlaces;
                 
                 displayResults();
                 showLoading(false);
                 
-            } catch (error) { 
+            } catch (error) {
                 resultsContainer.innerHTML = `<p class="text-red-500 col-span-full text-center">${error.message}</p>`;
                 showLoading(false);
             }
@@ -345,7 +292,8 @@
                     request = { location: geoResult.location, radius: 5000, keyword: `${area} ${getSearchQuery()}` };
                 }
                 
-                if (onlyOpen) request.openNow = true;
+                // *** FIX: 移除請求中的 openNow，改由後續手動過濾 ***
+                // if (onlyOpen) request.openNow = true;
 
                 let allResults = [];
                 let pageCount = 0;
@@ -378,7 +326,11 @@
         }
         
         function getSearchQuery() {
-            return currentSelections.cuisine === "" ? "餐廳" : currentSelections.cuisine;
+            let cuisine = cuisineSelect.value;
+            if (cuisine === 'custom_cuisine_input') {
+                cuisine = customCuisineInput.value.trim();
+            }
+            return cuisine === "" ? "餐廳" : cuisine;
         }
         
         function displayResults() {
@@ -428,9 +380,10 @@
                 }
 
                 const detailedPlace = await getPlaceDetails(place.place_id);
+                // *** FIX: 將營業狀態的嚴格檢查放在這裡 ***
                 if (onlyOpen && detailedPlace.opening_hours?.isOpen() !== true) return null;
 
-                if(userLocation && currentSelections.area === 'current_location') {
+                if(userLocation && areaSelect.value === 'current_location') {
                      const userLatLng = new google.maps.LatLng(userLocation.lat, userLocation.lng);
                      const distanceData = await getWalkingDistance(userLatLng, detailedPlace.geometry.location);
                      if (distanceData && distanceData.durationValue <= 600) {
