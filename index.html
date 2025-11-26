@@ -28,9 +28,6 @@
             -webkit-tap-highlight-color: transparent;
             padding-bottom: 40px;
         }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        
         /* 卡片動畫 */
         @keyframes slide-up-fade {
             from { opacity: 0; transform: translateY(20px); }
@@ -40,7 +37,19 @@
             animation: slide-up-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             opacity: 0;
         }
-
+        /* 交通模式按鈕樣式 */
+        .mode-btn {
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            background-color: white;
+            color: #64748b;
+        }
+        .mode-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+        }
         /* 底部面板動畫 */
         .bottom-sheet {
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -64,20 +73,29 @@
 
     <!-- 1. 頂部導航與搜尋觸發 -->
     <div class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm">
-        <div class="flex items-center justify-between gap-4 max-w-5xl mx-auto">
+        <div class="flex items-center justify-between gap-4 max-w-5xl mx-auto mb-3">
             <h1 class="text-xl font-bold text-indigo-600 flex-shrink-0">美食探險</h1>
-            
             <!-- 搜尋觸發條 -->
             <div id="search-trigger" class="flex-grow bg-slate-100 rounded-full px-4 py-2.5 flex items-center gap-2 text-sm text-slate-500 cursor-pointer hover:bg-slate-200 transition-colors">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
                 <span id="search-bar-text" class="truncate">點此設定搜尋條件...</span>
             </div>
         </div>
+
+        <!-- 交通方式選擇 (Transport Mode) -->
+        <div class="flex justify-center gap-3 max-w-5xl mx-auto mb-3">
+            <button class="mode-btn active px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1" onclick="setTransportMode('walking')">
+                <span>🚶</span> 步行 (10分)
+            </button>
+            <button class="mode-btn px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1" onclick="setTransportMode('driving')">
+                <span>🚗</span> 開車 (5公里)
+            </button>
+        </div>
         
         <!-- 快篩按鈕群組 (Quick Filters) - 自動換行 -->
-        <div class="flex flex-wrap gap-2 mt-3 pb-2 max-w-5xl mx-auto w-full">
-            <button onclick="searchNearbyAll()" class="whitespace-nowrap px-3 py-1.5 bg-indigo-600 border border-indigo-600 rounded-full text-xs font-medium text-white shadow-sm active:scale-95 transition-transform">
-                📍 附近好店 (10分內)
+        <div class="flex flex-wrap gap-2 max-w-5xl mx-auto w-full justify-center sm:justify-start">
+            <button onclick="quickSearch('')" class="whitespace-nowrap px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-xs font-bold text-indigo-600 shadow-sm active:scale-95 transition-transform">
+                🍽️ 所有美食
             </button>
             <button onclick="quickSearch('牛肉麵')" class="whitespace-nowrap px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600 shadow-sm active:bg-indigo-50 active:text-indigo-600">🍜 牛肉麵</button>
             <button onclick="quickSearch('火鍋')" class="whitespace-nowrap px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600 shadow-sm active:bg-indigo-50 active:text-indigo-600">🍲 火鍋</button>
@@ -96,7 +114,7 @@
     </div>
 
     <!-- 2. 主要內容區 -->
-    <div class="w-full max-w-5xl mx-auto px-4 pt-6">
+    <div class="w-full max-w-5xl mx-auto px-4 pt-4">
         
         <!-- 錯誤訊息容器 -->
         <div id="error-container" class="hidden mb-6 bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm text-center"></div>
@@ -109,7 +127,7 @@
                     <div class="inline-block p-6 rounded-full bg-slate-200 mb-4">
                         <svg class="w-10 h-10 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
                     </div>
-                    <p class="text-slate-500 font-medium">點擊上方搜尋欄，開始您的美食探險！</p>
+                    <p class="text-slate-500 font-medium">請選擇交通方式與美食種類</p>
                 </div>
             </div>
             <!-- 載入更多按鈕 -->
@@ -127,7 +145,6 @@
     <!-- 4. 搜尋設定 Bottom Sheet -->
     <div id="bottom-sheet-overlay" class="bottom-sheet-overlay fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"></div>
     <div id="bottom-sheet" class="bottom-sheet fixed bottom-0 left-0 right-0 bg-white z-50 rounded-t-[2rem] shadow-2xl max-h-[85vh] flex flex-col">
-        <!-- 把手 -->
         <div class="w-full flex justify-center pt-3 pb-1 flex-shrink-0" onclick="closeBottomSheet()">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
         </div>
@@ -140,22 +157,11 @@
                 </button>
             </div>
 
-            <!-- 主選單視圖 -->
             <div id="sheet-main-view" class="flex flex-col gap-4 overflow-y-auto pb-4">
-                <!-- 地區按鈕 -->
                 <button onclick="showOptions('area')" class="w-full text-left flex-shrink-0">
                     <span class="text-xs font-bold text-slate-400 ml-1 block mb-1">地區</span>
                     <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center active:bg-slate-100 transition-colors">
                         <span id="selected-area-text" class="font-medium text-slate-800">📍 目前位置附近</span>
-                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                    </div>
-                </button>
-
-                <!-- 美食按鈕 -->
-                <button onclick="showOptions('cuisine')" class="w-full text-left flex-shrink-0">
-                    <span class="text-xs font-bold text-slate-400 ml-1 block mb-1">想吃什麼</span>
-                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center active:bg-slate-100 transition-colors">
-                        <span id="selected-cuisine-text" class="font-medium text-slate-800">所有美食</span>
                         <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
                     </div>
                 </button>
@@ -166,7 +172,6 @@
                 <div class="h-8"></div>
             </div>
 
-            <!-- 選項列表視圖 -->
             <div id="sheet-options-view" class="hidden flex-col h-full overflow-hidden">
                 <div class="mb-2 flex-shrink-0">
                     <button onclick="showMainView()" class="text-sm text-slate-500 flex items-center gap-1 mb-2 py-2">
@@ -174,11 +179,8 @@
                         返回設定
                     </button>
                 </div>
-                <div id="options-list" class="flex-grow overflow-y-auto space-y-2 pr-2 pb-6">
-                    <!-- 選項由 JS 生成 -->
-                </div>
+                <div id="options-list" class="flex-grow overflow-y-auto space-y-2 pr-2 pb-6"></div>
                 
-                <!-- 自訂輸入框 -->
                 <div id="custom-input-area" class="hidden pt-4 mt-2 border-t border-slate-100 flex-shrink-0">
                     <div class="flex gap-2">
                         <input type="text" id="custom-input" class="flex-grow bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="請輸入...">
@@ -210,15 +212,21 @@
         const customInputConfirm = document.getElementById('custom-input-confirm');
         
         const selectedAreaText = document.getElementById('selected-area-text');
-        const selectedCuisineText = document.getElementById('selected-cuisine-text');
         const mainSearchBtn = document.getElementById('main-search-btn');
 
         // Global state
         let placesService, directionsService, geocoder; 
-        let allBasicPlaces = []; // 儲存所有基礎結果
+        let allBasicPlaces = []; 
         let displayedCount = 0;
-        const BATCH_SIZE = 20; // 每次處理並顯示的數量
-        let currentSelections = { area: 'current_location', areaName: '📍 目前位置附近', cuisine: '', cuisineName: '所有美食' };
+        const BATCH_SIZE = 20; 
+        // 預設狀態
+        let currentSelections = { 
+            area: 'current_location', 
+            areaName: '📍 目前位置附近', 
+            cuisine: '', 
+            cuisineName: '所有美食',
+            mode: 'walking' // 預設步行
+        };
         let currentUserLocation = null;
         let activeSelectionType = null; 
 
@@ -244,7 +252,7 @@
             directionsService = new google.maps.DirectionsService();
             geocoder = new google.maps.Geocoder();
             console.log('Map Services Ready');
-            getUserLocation(true).catch(() => {}); // Pre-fetch location
+            getUserLocation(true).catch(() => {}); 
         }
 
         // Location
@@ -278,7 +286,22 @@
             setTimeout(() => errorContainer.classList.add('hidden'), 5000);
         }
 
-        // Bottom Sheet UI Logic
+        // --- Transport Mode Logic ---
+        window.setTransportMode = (mode) => {
+            currentSelections.mode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(mode === 'walking' ? '步行' : '開車')) {
+                    btn.classList.add('active');
+                }
+            });
+            // 如果已經有選擇美食，直接重新搜尋
+            if (allBasicPlaces.length > 0 || currentSelections.cuisine !== '') {
+                performSearch();
+            }
+        };
+
+        // --- Bottom Sheet UI Logic ---
         function openBottomSheet() {
             bottomSheetOverlay.classList.add('open');
             bottomSheet.classList.add('open');
@@ -297,14 +320,16 @@
         }
 
         function showOptions(type) {
+            if (type !== 'area') return; // 現在只有地區需要 Modal，美食已在首頁
+            
             activeSelectionType = type;
-            sheetTitle.textContent = type === 'area' ? '選擇地區' : '想吃什麼';
+            sheetTitle.textContent = '選擇地區';
             sheetMainView.classList.add('hidden');
             sheetOptionsView.classList.remove('hidden');
             optionsList.innerHTML = '';
             customInputArea.classList.add('hidden');
 
-            const options = type === 'area' ? [
+            const options = [
                 { text: '📍 目前位置附近', value: 'current_location' },
                 { text: '✏️ 自行輸入地區...', value: 'custom' },
                 { text: '台北市 信義區', value: '台北市信義區' }, { text: '台北市 大安區', value: '台北市大安區' },
@@ -315,15 +340,6 @@
                 { text: '新北市 板橋區', value: '新北市板橋區' }, { text: '新北市 中和區', value: '新北市中和區' },
                 { text: '新北市 永和區', value: '新北市永和區' }, { text: '新北市 新莊區', value: '新北市新莊區' },
                 { text: '新北市 新店區', value: '新北市新店區' }, { text: '新北市 三重區', value: '新北市三重區' },
-            ] : [
-                { text: '所有美食', value: '' },
-                { text: '✏️ 自行輸入...', value: 'custom' },
-                { text: '牛肉麵', value: '牛肉麵' }, { text: '火鍋', value: '火鍋' },
-                { text: '日式料理', value: '日式料理' }, { text: '韓式料理', value: '韓式料理' },
-                { text: '義大利麵', value: '義大利麵' }, { text: '美式漢堡', value: '美式漢堡' },
-                { text: '泰式料理', value: '泰式料理' }, { text: '咖啡廳', value: '咖啡廳' },
-                { text: '早午餐', value: '早午餐' }, { text: '小吃', value: '小吃' },
-                { text: '甜點', value: '甜點' }, { text: '麵包店', value: '麵包店' }, { text: '素食', value: '素食' }
             ];
 
             options.forEach(opt => {
@@ -334,11 +350,13 @@
                     if (opt.value === 'custom') {
                         customInputArea.classList.remove('hidden');
                         customInput.value = '';
-                        customInput.placeholder = type === 'area' ? '例如：台中西區、東京新宿' : '例如：拉麵、咖哩';
+                        customInput.placeholder = '例如：台中西區、東京新宿';
                         customInput.focus();
                         optionsList.scrollTop = optionsList.scrollHeight;
                     } else {
                         selectOption(opt.value, opt.text);
+                        closeBottomSheet();
+                        // 若有美食選擇，可考慮自動搜尋
                     }
                 };
                 optionsList.appendChild(btn);
@@ -350,18 +368,15 @@
                 currentSelections.area = value;
                 currentSelections.areaName = text;
                 selectedAreaText.textContent = text;
-            } else {
-                currentSelections.cuisine = value;
-                currentSelections.cuisineName = text || '所有美食';
-                selectedCuisineText.textContent = text || '所有美食';
             }
-            showMainView(); // Auto close option view
+            showMainView();
         }
 
         customInputConfirm.onclick = () => {
             const val = customInput.value.trim();
             if (val) {
                 selectOption(val, val);
+                closeBottomSheet();
             }
         };
 
@@ -374,17 +389,7 @@
 
         window.quickSearch = (cuisine) => {
             currentSelections.cuisine = cuisine;
-            currentSelections.cuisineName = cuisine;
-            performSearch();
-        }
-        
-        window.searchNearbyAll = () => {
-            currentSelections.area = 'current_location';
-            currentSelections.areaName = '📍 目前位置附近';
-            selectedAreaText.textContent = '📍 目前位置附近';
-            currentSelections.cuisine = '';
-            currentSelections.cuisineName = '所有美食';
-            selectedCuisineText.textContent = '所有美食';
+            currentSelections.cuisineName = cuisine || '所有美食';
             performSearch();
         }
 
@@ -396,7 +401,8 @@
 
         // --- 核心搜尋邏輯 (重構版) ---
         async function performSearch(isInitial = true) {
-            searchBarText.textContent = `${currentSelections.areaName} 的 ${currentSelections.cuisineName}`;
+            const modeText = currentSelections.mode === 'walking' ? '(步行10分)' : '(開車5km)';
+            searchBarText.textContent = `${currentSelections.areaName} 的 ${currentSelections.cuisineName} ${modeText}`;
             
             if (isInitial) {
                 resultsContainer.innerHTML = '';
@@ -404,7 +410,6 @@
                 allBasicPlaces = [];
                 displayedCount = 0;
                 
-                // 顯示骨架屏
                 resultsContainer.innerHTML = Array(6).fill(0).map(() => `
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 h-72 animate-pulse">
                         <div class="bg-slate-200 h-40 rounded-t-2xl"></div>
@@ -417,23 +422,20 @@
             }
 
             try {
-                // 1. 位置檢查
                 if (currentSelections.area === 'current_location' && !currentUserLocation) {
                     await getUserLocation();
                 }
 
-                // 2. 廣域搜尋 (抓取多頁基本資料)
                 if (isInitial) {
                     const basicResults = await fetchAllBasicPlaces(currentSelections.area, currentUserLocation);
                     if (basicResults.length === 0) {
                         resultsContainer.innerHTML = `<div class="col-span-full text-center py-10 text-slate-500">找不到相關餐廳 🥲<br>試試看其他關鍵字吧！</div>`;
                         return;
                     }
-                    // 全域排序 (評論數優先)
+                    // 全域排序
                     allBasicPlaces = basicResults.sort((a, b) => (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
                 }
 
-                // 3. 分批處理詳細資料
                 await loadNextBatch();
 
             } catch (e) {
@@ -455,54 +457,58 @@
             return new Promise(async (resolve, reject) => {
                 let request;
                 const keyword = currentSelections.cuisine || '餐廳';
-                let minRating = 4.0; // 預設評分門檻
+                let minRating = 4.0;
 
                 if (area === 'current_location') {
                     if (!loc) { reject(new Error("無定位權限")); return; }
                     
-                    // *** NEW: Check country for Current Location ***
                     try {
                          const geoResult = await reverseGeocode(loc);
                          const isJapan = geoResult.address_components.some(c => c.short_name === 'JP');
                          if (isJapan) minRating = 3.5;
-                    } catch (e) {
-                        console.warn("Reverse geocoding failed", e);
-                    }
+                    } catch (e) { console.warn("Reverse geocoding failed", e); }
                     
-                    request = { location: new google.maps.LatLng(loc.lat, loc.lng), rankBy: google.maps.places.RankBy.DISTANCE, keyword: keyword };
+                    // 根據模式設定 Radius
+                    // 步行: 預抓 1.5km 讓後續過濾
+                    // 開車: 5km
+                    const radius = currentSelections.mode === 'walking' ? 1500 : 5000;
+                    
+                    // 雖然 nearbySearch rankBy:DISTANCE 不支援 radius, 但若用 keyword 搜尋通常會給比較遠
+                    // 若要嚴格距離，可用 rankBy: PROMINENCE + radius
+                    // 這裡策略：步行用 DISTANCE (最近優先)，開車用 PROMINENCE + Radius (熱門優先)
+                    if (currentSelections.mode === 'walking') {
+                         request = { location: new google.maps.LatLng(loc.lat, loc.lng), rankBy: google.maps.places.RankBy.DISTANCE, keyword: keyword };
+                    } else {
+                         request = { location: new google.maps.LatLng(loc.lat, loc.lng), radius: radius, keyword: keyword };
+                    }
+
                 } else {
                     try {
                         const geoData = await geocodeAddress(area);
-                        // *** NEW: Check country for Custom Area ***
                         if (geoData.isJapan) minRating = 3.5;
-                        
+                        // 指定地區一律用 5km (或更廣)
                         request = { location: geoData.location, radius: 5000, keyword: `${area} ${keyword}` };
                     } catch (e) { reject(e); return; }
                 }
 
                 let allResults = [];
                 let pageCount = 0;
-                // 抓取最多 3 頁 (約 60 筆)
-                const fetchPage = (nextPageToken) => {
-                    if (nextPageToken) request.pageToken = nextPageToken;
-                };
+                const fetchPage = (nextPageToken) => { if (nextPageToken) request.pageToken = nextPageToken; };
 
                 placesService.nearbySearch(request, (results, status, pagination) => {
                     if (status === 'OK') {
-                        // *** REVISED: Apply dynamic rating filter ***
                         const validResults = results.filter(p => p.rating >= minRating && p.user_ratings_total > 10);
                         allResults = allResults.concat(validResults);
                         pageCount++;
                         
                         if (pagination && pagination.hasNextPage && pageCount < 3) {
-                            setTimeout(() => pagination.nextPage(), 2000); // 避免 API Rate Limit
+                            setTimeout(() => pagination.nextPage(), 2000); 
                         } else {
                             resolve(allResults);
                         }
                     } else if (status === 'ZERO_RESULTS') {
                         resolve([]);
                     } else {
-                        // 若第一頁就錯才報錯，否則回傳已抓到的
                         if (pageCount === 0) reject(new Error("API Error: " + status));
                         else resolve(allResults);
                     }
@@ -511,13 +517,11 @@
         }
 
         async function loadNextBatch() {
-            // 清除骨架屏
             if (displayedCount === 0) resultsContainer.innerHTML = '';
             
             const batch = allBasicPlaces.slice(displayedCount, displayedCount + BATCH_SIZE);
             if (batch.length === 0) return;
 
-            // 針對這一批次，查詢詳細資料 (包含營業時間、電話、精確距離)
             const processedBatch = await Promise.all(batch.map(p => processPlaceDetails(p, currentUserLocation)));
             const validBatch = processedBatch.filter(p => p !== null);
 
@@ -531,9 +535,10 @@
 
         function updatePaginationButton() {
             paginationContainer.innerHTML = '';
-            if (displayedCount < allFetchedPlaces.length) {
+            // *** FIX: 使用 correct variable 'allBasicPlaces' ***
+            if (displayedCount < allBasicPlaces.length) {
                 const btn = document.createElement('button');
-                btn.innerHTML = `載入更多 <span class="text-xs opacity-70 ml-1">(${displayedCount}/${allFetchedPlaces.length})</span>`;
+                btn.innerHTML = `載入更多 <span class="text-xs opacity-70 ml-1">(${displayedCount}/${allBasicPlaces.length})</span>`;
                 btn.className = "bg-white border border-slate-300 text-slate-600 px-8 py-3 rounded-full font-bold shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all active:scale-95";
                 btn.onclick = () => {
                     btn.innerHTML = `<div class="loader small-loader border-slate-400 border-t-indigo-600"></div>`;
@@ -556,15 +561,11 @@
             });
         }
         
-        // *** NEW: Reverse Geocoding ***
         function reverseGeocode(loc) {
              return new Promise((resolve, reject) => {
                 geocoder.geocode({ location: loc }, (results, status) => {
-                    if (status === 'OK' && results[0]) {
-                        resolve(results[0]);
-                    } else {
-                        reject(status);
-                    }
+                    if (status === 'OK' && results[0]) resolve(results[0]);
+                    else reject(status);
                 });
             });
         }
@@ -576,26 +577,31 @@
                     fields: ['name', 'rating', 'user_ratings_total', 'formatted_address', 'photos', 'place_id', 'opening_hours', 'url', 'price_level', 'geometry', 'types', 'formatted_phone_number']
                 }, async (detail, status) => {
                     if (status === 'OK') {
-                        // 計算距離與過濾 (僅針對目前位置模式做嚴格過濾)
                         if (loc) {
                             const userLatLng = new google.maps.LatLng(loc.lat, loc.lng);
                             const distMeters = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, detail.geometry.location);
                             
                             if (currentSelections.area === 'current_location') {
-                                // 寬鬆過濾：直線 1.2km 內才算，再算步行時間
-                                if (distMeters <= 1200) {
-                                    const route = await getWalkingRoute(userLatLng, detail.geometry.location);
-                                    if (route && route.value <= 600) { // 10分鐘內
-                                        detail.distanceData = route;
+                                // 步行模式：嚴格 10 分鐘 (約 800m)
+                                if (currentSelections.mode === 'walking') {
+                                    if (distMeters <= 1200) { // 先用直線初篩
+                                        const route = await getWalkingRoute(userLatLng, detail.geometry.location);
+                                        if (route && route.value <= 600) { // 600秒
+                                            detail.distanceData = route;
+                                            resolve(detail);
+                                        } else resolve(null);
+                                    } else resolve(null);
+                                } 
+                                // 開車模式：5公里內
+                                else {
+                                    if (distMeters <= 5000) {
+                                        const distText = distMeters > 1000 ? (distMeters/1000).toFixed(1) + ' km' : Math.round(distMeters) + ' m';
+                                        detail.distanceData = { text: distText + ' (直線)' };
                                         resolve(detail);
-                                    } else {
-                                        resolve(null); // 太遠
-                                    }
-                                } else {
-                                    resolve(null); // 直線太遠
+                                    } else resolve(null);
                                 }
                             } else {
-                                // 指定地區模式：顯示直線距離
+                                // 指定地區：顯示直線
                                 const distText = distMeters > 1000 ? (distMeters/1000).toFixed(1) + ' km' : Math.round(distMeters) + ' m';
                                 detail.distanceData = { text: distText + ' (直線)' };
                                 resolve(detail);
@@ -623,29 +629,23 @@
             });
         }
 
-        // UI Components
         function createCard(p) {
             const card = document.createElement('div');
             card.className = "bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col card-enter hover:shadow-md transition-shadow duration-300";
             
             const photo = p.photos?.[0]?.getUrl({maxWidth: 400, maxHeight: 300}) || 'https://placehold.co/400x300/e2e8f0/94a3b8?text=No+Img';
             
-            // 營業狀態
             let statusHtml = '';
             if (p.opening_hours) {
                 const isOpen = p.opening_hours.isOpen();
                 const statusText = isOpen ? '營業中' : '休息中';
                 const statusColor = isOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-50 text-rose-600';
-                
-                // 嘗試取得今日營業時間
                 let hoursText = '';
                 if (p.opening_hours.weekday_text) {
                     const dayIndex = (new Date().getDay() + 6) % 7;
                     hoursText = p.opening_hours.weekday_text[dayIndex] || '';
-                    // 簡化顯示，只取時間部分
                     hoursText = hoursText.split(': ')[1] || hoursText;
                 }
-                
                 statusHtml = `
                     <div class="flex flex-col items-end">
                         <span class="text-xs font-bold px-2 py-1 rounded-lg ${statusColor} mb-1">${statusText}</span>
@@ -654,18 +654,15 @@
                 `;
             }
 
-            // 價位
             const priceMap = ['','平價','中價位','高價位','奢華'];
             const priceText = priceMap[p.price_level] || '';
 
-            // 類型
             const typeTranslations = {'cafe':'咖啡廳','restaurant':'餐廳','bar':'酒吧','bakery':'麵包店','meal_takeaway':'外帶'};
             let typeText = '';
             if(p.types) {
                 for(let t of p.types) if(typeTranslations[t]) { typeText = typeTranslations[t]; break; }
             }
             
-            // *** NEW: 行銷活動警示 (邏輯修正：評分>4.8 且 評論數>1000) ***
             let marketingHtml = '';
             if (p.rating > 4.8 && p.user_ratings_total > 1000) {
                  marketingHtml = `<div class="mt-2 text-[10px] text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-100 flex items-center gap-1 w-fit">
@@ -702,7 +699,7 @@
                             <span class="line-clamp-1 text-xs">${p.formatted_address}</span>
                         </div>
                         ${p.distanceData ? `<div class="flex items-center gap-2 text-indigo-600 font-bold bg-indigo-50 px-2 py-1 rounded-lg w-fit text-xs">
-                            <span>🚶</span><span>${p.distanceData.text}</span>
+                            <span>${currentSelections.mode === 'walking' ? '🚶' : '🚗'}</span><span>${p.distanceData.text}</span>
                         </div>` : ''}
                         ${p.formatted_phone_number ? `<div class="flex items-center gap-2 text-xs">
                             <span>📞</span><a href="tel:${p.formatted_phone_number}" class="underline hover:text-indigo-600">${p.formatted_phone_number}</a>
