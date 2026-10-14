@@ -2,633 +2,656 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>美食探險家</title>
-    
-    <!-- PWA & Mobile Web Capabilities -->
-    <link id="manifest-link" rel="manifest">
     <meta name="theme-color" content="#ea580c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="美食探險家">
     <link rel="apple-touch-icon" href="https://placehold.co/192x192/ea580c/ffffff?text=食">
 
-    <!-- Fonts & Tailwind CSS (v3.4 CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #ea580c;
-            --primary-light: #f97316;
-            --primary-surface: #fff7ed;
-            --bg-canvas: #fafaf9;
+            --primary-dark: #c2410c;
+            --bg-color: #fafaf9;
         }
-
         body {
-            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
-            background-color: var(--bg-canvas);
+            font-family: 'Poppins', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
             -webkit-tap-highlight-color: transparent;
-            padding-bottom: env(safe-area-inset-bottom, 24px);
+            padding-bottom: 100px;
         }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* 隱藏滾動條與原生搜尋框取消鈕 */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
-
-        /* 卡片進場動態效果 */
-        @keyframes subtle-fade-slide {
+        @keyframes slide-up-fade {
             from { opacity: 0; transform: translateY(14px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-card {
-            animation: subtle-fade-slide 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0;
+        .card-enter {
+            animation: slide-up-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-
-        /* 觸控微反饋 */
-        .tap-active:active {
-            transform: scale(0.96);
-            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        /* 愛心收藏彈跳效果 */
-        @keyframes heart-pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.35); }
-            100% { transform: scale(1); }
-        }
-        .animate-pop {
-            animation: heart-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        /* 骨架屏光暈 Shimmer 動態 */
-        @keyframes shimmer-move {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        .skeleton-shimmer {
-            background: linear-gradient(90deg, #f5f5f4 25%, #e7e5e4 50%, #f5f5f4 75%);
-            background-size: 200% 100%;
-            animation: shimmer-move 1.6s infinite ease-in-out;
-        }
-
-        /* 頂部 Header 滾動收折過渡 */
-        #collapsible-controls {
-            transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, transform 0.25s ease;
-            max-height: 380px;
-            opacity: 1;
-            transform: translateY(0);
+        body.modal-open {
             overflow: hidden;
-        }
-        #collapsible-controls.collapsed {
-            max-height: 0;
-            opacity: 0;
-            transform: translateY(-8px);
-            pointer-events: none;
-            margin-bottom: 0 !important;
-            padding-bottom: 0 !important;
-        }
-
-        /* 收折狀態下的迷你狀態膠囊條 */
-        #collapsed-pill-bar {
-            transition: max-height 0.25s ease, opacity 0.2s ease;
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-        }
-        #collapsed-pill-bar.active {
-            max-height: 48px;
-            opacity: 1;
-        }
-
-        /* Bottom Sheet 抽屜動態 */
-        .sheet-backdrop {
-            transition: opacity 0.28s ease;
-            opacity: 0;
-            pointer-events: none;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
-        .sheet-backdrop.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .sheet-panel {
-            transition: transform 0.32s cubic-bezier(0.2, 0.9, 0.25, 1);
-            transform: translateY(100%);
-            max-height: 88vh;
-        }
-        .sheet-panel.active {
-            transform: translateY(0);
-        }
-
-        body.prevent-scroll {
-            overflow: hidden;
-            touch-action: none;
         }
     </style>
 </head>
-<body class="text-stone-800 antialiased selection:bg-orange-100 selection:text-orange-800">
+<body class="text-stone-800">
 
-    <!-- 頂部主面板與全域篩選 -->
-    <header id="main-header" class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200/90 shadow-sm transition-shadow duration-200">
-        <div class="max-w-5xl mx-auto px-4 pt-3 pb-2.5">
+    <!-- 1. 頂部導航與搜尋控制區 -->
+    <header id="main-header" class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm transition-all duration-200">
+        <div class="max-w-5xl mx-auto px-4 py-2.5">
             
-            <!-- 品牌列與動作按鈕 -->
-            <div class="flex items-center justify-between gap-3 mb-2.5">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 bg-gradient-to-tr from-orange-600 to-amber-500 rounded-xl flex items-center justify-center text-white font-black text-base shadow-sm shadow-orange-200">
-                        食
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-1.5">
-                            <h1 class="text-base font-extrabold text-stone-900 leading-tight">美食探險家</h1>
-                            <span id="japan-mode-badge" class="hidden text-xs font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200/60">🇯🇵 3.5★</span>
-                        </div>
-                        <span id="current-region-badge" class="text-xs font-semibold text-stone-500 tracking-tight">📍 目前位置附近</span>
-                    </div>
+            <!-- 第一列：Logo、地區設定觸發條、收藏切換 -->
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-shrink-0 cursor-pointer" onclick="switchTab('explore')">
+                    <div class="w-8 h-8 bg-gradient-to-tr from-orange-600 to-amber-500 rounded-xl flex items-center justify-center text-white font-black text-base shadow-sm">食</div>
+                    <span class="text-base font-black tracking-tight text-stone-900 hidden sm:inline">美食探險家</span>
                 </div>
 
-                <!-- 頂部快捷按鈕群：收藏與地點設定 -->
-                <div class="flex items-center gap-2">
-                    <button id="favorites-toggle-btn" class="tap-active flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-stone-100 text-stone-700 hover:bg-stone-200/80 transition-colors">
-                        <span id="fav-icon" class="text-rose-500">❤️</span>
-                        <span>收藏 (<span id="fav-count">0</span>)</span>
-                    </button>
-                    
-                    <button id="search-trigger-btn" class="tap-active flex items-center gap-1.5 bg-orange-50 border border-orange-200/80 text-orange-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-orange-100 transition-colors">
-                        <span id="search-bar-label" class="truncate max-w-[110px] sm:max-w-[170px]">地點設定</span>
-                        <svg class="w-3.5 h-3.5 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 收折時出現的極窄狀態膠囊條 -->
-            <div id="collapsed-pill-bar" class="flex items-center justify-between pb-1 pt-0.5">
-                <button onclick="expandControlsHeader(true)" class="tap-active flex items-center gap-2 text-xs font-bold text-orange-700 bg-orange-50/90 border border-orange-200/90 px-3.5 py-1.5 rounded-full shadow-sm">
-                    <span id="collapsed-summary-text">📍 附近 · 🍽️ 全部 · 🚶 步行</span>
-                    <svg class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+                <!-- 地區選擇觸發膠囊 -->
+                <button type="button" onclick="openBottomSheet('area')" class="flex-grow max-w-md bg-stone-100 hover:bg-stone-200/80 active:scale-[0.99] rounded-full px-3.5 py-2 flex items-center justify-between gap-2 text-xs font-bold text-stone-700 transition-all border border-stone-200/60">
+                    <div class="flex items-center gap-1.5 truncate">
+                        <span class="text-orange-600 flex-shrink-0">📍</span>
+                        <span id="header-area-label" class="truncate">目前位置附近</span>
+                        <span class="text-stone-300">|</span>
+                        <span id="header-cuisine-label" class="text-orange-600 truncate">所有美食</span>
+                    </div>
+                    <span class="text-[11px] text-stone-400 flex-shrink-0 bg-white px-2 py-0.5 rounded-full border border-stone-200">換地區 ▾</span>
                 </button>
-                <div class="flex items-center gap-1.5 text-xs text-stone-500 font-semibold">
-                    <button onclick="expandAndFocusFoodInput()" class="tap-active flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-700 font-bold">
-                        <span>🔍</span>
-                        <span>搜食物</span>
-                    </button>
-                    <button onclick="triggerRandomPick()" class="tap-active flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-bold">
-                        <span>🎲</span>
-                        <span>幫我選</span>
-                    </button>
-                </div>
+
+                <!-- 收藏頁切換按鈕 -->
+                <button type="button" id="fav-tab-btn" onclick="switchTab('favorites')" class="flex-shrink-0 relative bg-stone-100 hover:bg-rose-50 text-stone-700 px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1 border border-stone-200/60 transition-all active:scale-95">
+                    <span>❤️</span>
+                    <span class="hidden sm:inline">收藏</span>
+                    <span id="fav-count-badge" class="bg-rose-500 text-white text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">0</span>
+                </button>
             </div>
 
-            <!-- 可收折區域：交通方式切換器 + 手動搜尋框 + 美食標籤雲 -->
-            <div id="collapsible-controls">
+            <!-- 可收折展開區 -->
+            <div id="header-expandable" class="mt-2.5 space-y-2.5 overflow-hidden transition-all duration-200">
                 
-                <!-- 交通方式切換器 -->
-                <div class="grid grid-cols-2 gap-2 bg-stone-100 p-1 rounded-xl mb-2">
-                    <button id="mode-walk-btn" onclick="switchTransportMode('walking')" class="tap-active py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-white text-orange-600 shadow-sm transition-all">
-                        <span>🚶</span>
-                        <span>步行 (10分可達)</span>
-                    </button>
-                    <button id="mode-drive-btn" onclick="switchTransportMode('driving')" class="tap-active py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 text-stone-600 hover:text-stone-900 transition-all">
-                        <span>🚗</span>
-                        <span>開車 (5公里範圍)</span>
-                    </button>
+                <!-- 第二列：交通方式 + 手動搜尋食物輸入框 -->
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <!-- 步行 / 開車 切換 -->
+                    <div class="flex bg-stone-100 p-1 rounded-xl border border-stone-200/70 flex-shrink-0">
+                        <button type="button" id="mode-walking-btn" onclick="setTransportMode('walking')" class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all bg-orange-600 text-white shadow-sm">
+                            <span>🚶</span> 步行 10分內
+                        </button>
+                        <button type="button" id="mode-driving-btn" onclick="setTransportMode('driving')" class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all text-stone-600 hover:text-stone-900">
+                            <span>🚗</span> 開車 5公里
+                        </button>
+                    </div>
+
+                    <!-- 手動輸入食物種類或店名搜尋欄 -->
+                    <form id="custom-cuisine-form" onsubmit="handleCustomFoodSubmit(event)" class="flex-grow flex gap-1.5">
+                        <div class="relative flex-grow">
+                            <input type="text" id="custom-cuisine-input" placeholder="手動輸入想吃的食物或店名 (例：酸菜魚、拉麵、燒肉)..." class="w-full bg-stone-100 focus:bg-white border border-stone-200 focus:border-orange-500 rounded-xl pl-3.5 pr-8 py-1.5 text-xs font-medium text-stone-800 outline-none transition-all">
+                            <button type="button" id="clear-cuisine-btn" onclick="clearCustomCuisine()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1 text-xs">✕</button>
+                        </div>
+                        <button type="submit" class="bg-stone-900 hover:bg-stone-800 active:scale-95 text-white px-4 py-1.5 rounded-xl text-xs font-bold flex-shrink-0 transition-all shadow-sm">
+                            搜尋
+                        </button>
+                    </form>
                 </div>
 
-                <!-- 手動搜尋食物種類 / 店名輸入框 -->
-                <form onsubmit="handleCustomCuisineSubmit(event)" class="relative flex items-center gap-1.5 mb-2">
-                    <div class="relative flex-1">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs pointer-events-none">🔍</span>
-                        <input
-                            id="custom-cuisine-input"
-                            type="search"
-                            enterkeyhint="search"
-                            oninput="toggleClearCuisineBtn()"
-                            placeholder="輸入想吃的食物或店名 (例：拉麵、燒肉、酸菜魚、滷肉飯)..."
-                            class="w-full bg-stone-100/90 focus:bg-white border border-stone-200/90 focus:border-orange-500 rounded-xl pl-8 pr-8 py-2 text-xs font-medium text-stone-800 placeholder:text-stone-400 outline-none focus:ring-2 focus:ring-orange-500/20 transition-all"
-                        >
-                        <button
-                            id="clear-cuisine-btn"
-                            type="button"
-                            onclick="clearCustomCuisineInput()"
-                            class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-stone-300/80 text-stone-600 hover:bg-stone-400 hover:text-white flex items-center justify-center text-xs font-bold transition-colors"
-                            title="清除關鍵字"
-                        >✕</button>
-                    </div>
-                    <button type="submit" class="tap-active px-3.5 py-2 bg-stone-900 hover:bg-orange-600 text-white rounded-xl text-xs font-bold shadow-sm transition-colors flex-shrink-0">
-                        搜尋
-                    </button>
-                </form>
+                <!-- 第三列：美食種類快速標籤雲 (全展開免橫滑) -->
+                <div id="cuisine-tags-wrapper" class="flex flex-wrap gap-1.5 items-center pt-0.5">
+                    <!-- 動態自訂關鍵字標籤與最近紀錄插入點 -->
+                    <span id="dynamic-custom-tags" class="contents"></span>
 
-                <!-- 智慧兩段式標籤雲 (預設常用 + 動態自訂標籤 + 展開更多) -->
-                <div class="flex flex-wrap gap-1.5 justify-start items-center">
-                    <!-- 全部美食 -->
-                    <button onclick="handleQuickSelect('')" data-cuisine="" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-600 text-white shadow-sm">
-                        🍽️ 全部美食
+                    <button type="button" onclick="quickSearch('')" data-cuisine="" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-orange-600 text-white border-orange-600 shadow-sm">
+                        🍽️ 全部好店
                     </button>
-
-                    <!-- 動態自訂搜尋活躍標籤 (當使用者輸入非預設標籤時自動浮現) -->
-                    <button id="custom-active-tag" onclick="handleQuickSelect('')" class="hidden tap-active px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-600 text-white shadow-sm flex items-center gap-1.5">
-                        <span id="custom-active-tag-text">🔍 自訂美食</span>
-                        <span class="text-orange-200 hover:text-white font-black">✕</span>
-                    </button>
-
-                    <!-- 最近手動搜尋過的食物標籤容器 -->
-                    <div id="recent-cuisine-tags" class="contents"></div>
-
-                    <!-- 首屏常駐熱門標籤 -->
-                    <button onclick="handleQuickSelect('牛肉麵')" data-cuisine="牛肉麵" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                        🍜 牛肉麵
-                    </button>
-                    <button onclick="handleQuickSelect('火鍋')" data-cuisine="火鍋" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                        🍲 火鍋
-                    </button>
-                    <button onclick="handleQuickSelect('日式料理')" data-cuisine="日式料理" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                        🍣 日式料理
-                    </button>
-                    <button onclick="handleQuickSelect('韓式料理')" data-cuisine="韓式料理" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                        🥘 韓式料理
-                    </button>
-                    <button onclick="handleQuickSelect('咖啡廳')" data-cuisine="咖啡廳" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
+                    <button type="button" onclick="quickSearch('咖啡廳')" data-cuisine="咖啡廳" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">
                         ☕ 咖啡廳
                     </button>
-                    <button onclick="handleQuickSelect('早午餐')" data-cuisine="早午餐" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
+                    <button type="button" onclick="quickSearch('火鍋')" data-cuisine="火鍋" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">
+                        🍲 火鍋
+                    </button>
+                    <button type="button" onclick="quickSearch('日式料理')" data-cuisine="日式料理" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">
+                        🍣 日式料理
+                    </button>
+                    <button type="button" onclick="quickSearch('牛肉麵')" data-cuisine="牛肉麵" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">
+                        🍜 牛肉麵
+                    </button>
+                    <button type="button" onclick="quickSearch('早午餐')" data-cuisine="早午餐" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">
                         🥞 早午餐
                     </button>
+                    <button type="button" onclick="quickSearch('甜點')" data-cuisine="甜點" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">
+                        🍰 甜點
+                    </button>
+                    <button type="button" onclick="quickSearch('小吃')" data-cuisine="小吃" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">
+                        🥟 小吃
+                    </button>
 
-                    <!-- 第二段隱藏標籤群 (點擊後平滑展開) -->
-                    <div id="more-tags-tray" class="contents hidden">
-                        <button onclick="handleQuickSelect('拉麵')" data-cuisine="拉麵" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🍥 拉麵
-                        </button>
-                        <button onclick="handleQuickSelect('燒肉')" data-cuisine="燒肉" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🥩 燒肉
-                        </button>
-                        <button onclick="handleQuickSelect('義大利麵')" data-cuisine="義大利麵" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🍝 義大利麵
-                        </button>
-                        <button onclick="handleQuickSelect('小吃')" data-cuisine="小吃" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🥟 在地小吃
-                        </button>
-                        <button onclick="handleQuickSelect('甜點')" data-cuisine="甜點" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🍰 精緻甜點
-                        </button>
-                        <button onclick="handleQuickSelect('美式漢堡')" data-cuisine="美式漢堡" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🍔 美式漢堡
-                        </button>
-                        <button onclick="handleQuickSelect('泰式料理')" data-cuisine="泰式料理" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🌶️ 泰式料理
-                        </button>
-                        <button onclick="handleQuickSelect('居酒屋')" data-cuisine="居酒屋" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🍶 居酒屋
-                        </button>
-                        <button onclick="handleQuickSelect('麵包店')" data-cuisine="麵包店" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🍞 手作烘焙
-                        </button>
-                        <button onclick="handleQuickSelect('素食')" data-cuisine="素食" class="tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70">
-                            🥗 蔬食素食
-                        </button>
-                    </div>
+                    <!-- 更多種類展開區 -->
+                    <span id="more-cuisine-tags" class="hidden contents">
+                        <button type="button" onclick="quickSearch('韓式料理')" data-cuisine="韓式料理" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">🥘 韓式料理</button>
+                        <button type="button" onclick="quickSearch('義大利麵')" data-cuisine="義大利麵" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">🍝 義大利麵</button>
+                        <button type="button" onclick="quickSearch('美式漢堡')" data-cuisine="美式漢堡" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">🍔 美式漢堡</button>
+                        <button type="button" onclick="quickSearch('泰式料理')" data-cuisine="泰式料理" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">🌶️ 泰式料理</button>
+                        <button type="button" onclick="quickSearch('燒肉')" data-cuisine="燒肉" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">🥩 燒肉</button>
+                        <button type="button" onclick="quickSearch('居酒屋')" data-cuisine="居酒屋" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">🍺 居酒屋</button>
+                        <button type="button" onclick="quickSearch('麵包店')" data-cuisine="麵包店" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">🍞 麵包店</button>
+                        <button type="button" onclick="quickSearch('素食')" data-cuisine="素食" class="cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300">🥗 素食</button>
+                    </span>
 
-                    <!-- 展開/收起切換鈕 -->
-                    <button id="toggle-more-tags-btn" onclick="toggleMoreTags()" class="tap-active px-3 py-1.5 rounded-lg text-xs font-bold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200/70 flex items-center gap-1 transition-colors">
-                        <span>＋更多種類</span>
+                    <button type="button" id="toggle-more-tags-btn" onclick="toggleMoreTags()" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-stone-200 transition-all">
+                        ＋ 更多種類
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 二次快篩與排序控制列 (有搜尋結果時顯示) -->
+        <div id="secondary-filter-bar" class="hidden bg-stone-50 border-t border-stone-200/80 px-4 py-2">
+            <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
+                <!-- 排序切換 -->
+                <div class="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-stone-200">
+                    <button type="button" onclick="setSortMode('bayesian')" data-sort="bayesian" class="sort-btn px-2.5 py-1 rounded-md text-xs font-bold bg-stone-900 text-white transition-all">🏆 老饕權重</button>
+                    <button type="button" onclick="setSortMode('reviews')" data-sort="reviews" class="sort-btn px-2.5 py-1 rounded-md text-xs font-bold text-stone-600 hover:bg-stone-100 transition-all">🔥 評論數</button>
+                    <button type="button" onclick="setSortMode('distance')" data-sort="distance" class="sort-btn px-2.5 py-1 rounded-md text-xs font-bold text-stone-600 hover:bg-stone-100 transition-all">📍 距離</button>
+                </div>
+
+                <!-- 營業中 + 檢視模式切換 -->
+                <div class="flex items-center gap-1.5">
+                    <button type="button" id="filter-open-btn" onclick="toggleFilterOpenNow()" class="px-2.5 py-1 rounded-lg text-xs font-bold border border-stone-200 bg-white text-stone-600 transition-all flex items-center gap-1">
+                        <span>🟢</span> 僅看營業中
+                    </button>
+                    <button type="button" id="view-mode-btn" onclick="toggleViewMode()" class="px-2.5 py-1 rounded-lg text-xs font-bold border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 transition-all" title="切換大圖/緊湊清單">
+                        📑 緊湊清單
                     </button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- 主要內容區 -->
-    <main class="max-w-5xl mx-auto px-4 pt-3.5 pb-20 min-h-[78vh]">
+    <!-- 2. 主要內容區 -->
+    <main class="w-full max-w-5xl mx-auto px-4 pt-4">
         
-        <!-- 全域狀態/錯誤通知欄 -->
-        <div id="status-toast-bar" class="hidden mb-3 p-3 rounded-xl text-xs font-semibold text-center border transition-all"></div>
-
-        <!-- 搜尋結果控制面板：統計、多維度排序與零延遲二次快篩 -->
-        <div id="results-meta-header" class="hidden mb-3.5 space-y-2.5">
-            <!-- 第一排：店家數量 + 大圖/清單切換 -->
-            <div class="flex items-center justify-between text-xs text-stone-600">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span id="results-count-text" class="font-bold text-stone-800">探索結果</span>
-                    <span id="results-filter-badge" class="bg-orange-50 text-orange-700 border border-orange-200/70 px-2 py-0.5 rounded-md font-bold text-xs">4.0★ 推薦</span>
-                </div>
-                
-                <!-- 雙重視圖切換 (大圖雜誌 vs 緊湊清單) -->
-                <div class="flex items-center bg-stone-100 p-0.5 rounded-lg border border-stone-200/70 flex-shrink-0">
-                    <button id="view-magazine-btn" onclick="switchViewMode('magazine')" class="tap-active px-2.5 py-1 rounded-md text-xs font-bold bg-white text-orange-600 shadow-sm flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                        <span>大圖</span>
-                    </button>
-                    <button id="view-compact-btn" onclick="switchViewMode('compact')" class="tap-active px-2.5 py-1 rounded-md text-xs font-semibold text-stone-600 flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                        <span>清單</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 第二排：老饕三段排序 + 零延遲「營業中 / 價位」即時過濾列 -->
-            <div id="secondary-filter-bar" class="flex flex-wrap items-center justify-between gap-2 bg-white p-2 rounded-xl border border-stone-200/80 shadow-sm">
-                <!-- 排序方式切換 -->
-                <div class="flex items-center gap-1 bg-stone-100 p-0.5 rounded-lg">
-                    <button onclick="changeSortBy('gourmet')" data-sort="gourmet" class="sort-btn tap-active px-2.5 py-1 rounded-md text-xs font-bold bg-white text-orange-600 shadow-sm transition-all">
-                        🏆 老饕推薦
-                    </button>
-                    <button onclick="changeSortBy('reviews')" data-sort="reviews" class="sort-btn tap-active px-2.5 py-1 rounded-md text-xs font-semibold text-stone-600 hover:text-stone-900 transition-all">
-                        🔥 人氣評論
-                    </button>
-                    <button onclick="changeSortBy('distance')" data-sort="distance" class="sort-btn tap-active px-2.5 py-1 rounded-md text-xs font-semibold text-stone-600 hover:text-stone-900 transition-all">
-                        📍 距離最近
-                    </button>
-                </div>
-
-                <!-- 即時二次快篩：營業中 & 價位 -->
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    <button id="filter-open-btn" onclick="toggleOpenNowFilter()" class="tap-active px-2.5 py-1 rounded-lg text-xs font-semibold border border-stone-200 bg-stone-50 text-stone-600 flex items-center gap-1 transition-all">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span>僅看營業中</span>
-                    </button>
-
-                    <select id="filter-price-select" onchange="changePriceFilter(this.value)" class="bg-stone-50 border border-stone-200 text-stone-700 text-xs font-semibold rounded-lg px-2 py-1 outline-none focus:border-orange-400">
-                        <option value="all">💰 全部價位</option>
-                        <option value="budget">🪙 銅板平價 ($~$$)</option>
-                        <option value="fancy">🥂 聚餐精緻 ($$$+)</option>
-                    </select>
-                </div>
-            </div>
+        <!-- 狀態與錯誤提示框 -->
+        <div id="error-container" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-xs font-bold flex items-center justify-between gap-3">
+            <span id="error-message-text"></span>
+            <button type="button" onclick="openBottomSheet('area')" class="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0">手動選地區</button>
         </div>
 
-        <!-- 結果卡片容器 (依 viewMode 動態變更 grid 樣式) -->
-        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            <!-- 初始啟動引導面板 -->
-            <div class="col-span-full flex flex-col items-center justify-center py-20 text-center">
-                <div class="w-16 h-16 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center text-3xl mb-3 shadow-sm border border-orange-100">
-                    🧭
-                </div>
-                <h3 class="text-base font-bold text-stone-900 mb-1">發現身邊隱藏的神級美食</h3>
-                <p class="text-xs text-stone-500 max-w-xs mb-4">支援上方手動輸入任何想吃的食物或店名，並透過老饕貝氏加權評分演算法自動過濾灌水店。</p>
-                <button onclick="executeSearch(true)" class="tap-active px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold shadow-md shadow-orange-200 transition-all flex items-center gap-2">
-                    <span>📍</span>
-                    <span>探索我附近的必吃名店</span>
-                </button>
-            </div>
+        <!-- 日本地區動態門檻提示 -->
+        <div id="japan-mode-banner" class="hidden mb-4 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between">
+            <span>🇯🇵 已啟用日本在地老饕標準：篩選門檻自動調整為 3.5★ 以上，並支援 Tabelog 一鍵查驗！</span>
         </div>
 
-        <!-- 分頁載入控制器 -->
-        <div id="pagination-controls" class="mt-8 flex justify-center"></div>
-    </main>
-
-    <!-- 右下角浮動功能按鈕群 -->
-    <div class="fixed bottom-6 right-5 z-20 flex flex-col items-end gap-2.5">
-        <!-- 🎲 幫我選一家 (吃什麼輪盤) 浮動按鈕 -->
-        <button id="floating-random-btn" onclick="triggerRandomPick()" class="hidden tap-active bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2.5 rounded-full shadow-lg border border-amber-300/40 flex items-center gap-1.5 text-xs font-extrabold hover:brightness-105 transition-all">
-            <span class="text-base">🎲</span>
-            <span>幫我選一家</span>
-        </button>
-
-        <!-- 回到頂端按鈕 -->
-        <button id="floating-top-btn" class="hidden w-11 h-11 bg-white/95 text-stone-700 rounded-full shadow-lg border border-stone-200/90 flex items-center justify-center tap-active transition-all">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-        </button>
-    </div>
-
-    <!-- 🎲 隨機選店彈出視窗 (Modal) -->
-    <div id="random-picker-modal" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-stone-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-250">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-stone-100 transform scale-95 transition-transform duration-250" id="random-card-content">
-            <!-- 內容由 JS 動態注入 -->
-        </div>
-    </div>
-
-    <!-- 搜尋地區設定：現代化 Bottom Sheet -->
-    <div id="sheet-overlay" class="sheet-backdrop fixed inset-0 bg-stone-900/60 z-40"></div>
-    <div id="sheet-modal" class="sheet-panel fixed bottom-0 left-0 right-0 bg-white z-50 rounded-t-[28px] shadow-2xl flex flex-col max-w-2xl mx-auto">
-        
-        <!-- 拖曳握把 -->
-        <div class="w-full flex justify-center pt-3 pb-1.5 flex-shrink-0 cursor-pointer" onclick="closeLocationSheet()">
-            <div class="w-10 h-1.5 bg-stone-300 rounded-full"></div>
-        </div>
-
-        <!-- 視窗標題 -->
-        <div class="px-5 py-3 flex items-center justify-between border-b border-stone-100 flex-shrink-0">
-            <div>
-                <h2 class="text-base font-extrabold text-stone-900">選擇探索地區與美食</h2>
-                <p class="text-xs text-stone-400">點選地區或輸入關鍵字立即開始搜尋</p>
-            </div>
-            <button onclick="closeLocationSheet()" class="p-2 rounded-full bg-stone-100 text-stone-500 tap-active">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-        </div>
-
-        <!-- 滾動內容區 -->
-        <div class="flex-grow overflow-y-auto p-5 space-y-4 no-scrollbar">
-            
-            <!-- 目前位置模式快捷按鈕 -->
-            <button onclick="selectTargetArea('current_location', '📍 目前位置附近')" class="tap-active w-full p-3.5 rounded-2xl bg-orange-50/80 border border-orange-200/90 flex items-center justify-between text-left group">
-                <div class="flex items-center gap-3">
-                    <span class="w-10 h-10 rounded-xl bg-orange-600 text-white flex items-center justify-center text-lg shadow-sm">📍</span>
-                    <div>
-                        <div class="text-xs font-bold text-stone-900">目前所在位置</div>
-                        <div class="text-xs text-orange-700 font-medium">使用即時 GPS 自動定位附近店家</div>
+        <!-- 探索結果列表 -->
+        <section id="explore-section">
+            <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- 初始引導狀態 -->
+                <div class="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                    <div class="w-20 h-20 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-4 text-4xl shadow-inner">
+                        🍜
+                    </div>
+                    <h2 class="text-lg font-black text-stone-800 mb-1">準備好探索身邊美食了嗎？</h2>
+                    <p class="text-xs text-stone-500 max-w-xs mb-5">直接點擊上方「美食標籤」或輸入想吃的料理，立即找出高評價、高評論數的實力好店！</p>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="quickSearch('')" class="bg-orange-600 hover:bg-orange-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs shadow-md active:scale-95 transition-all">
+                            📍 立即搜尋附近好店
+                        </button>
+                        <button type="button" onclick="openBottomSheet('area')" class="bg-white border border-stone-300 text-stone-700 font-bold px-4 py-2.5 rounded-xl text-xs active:scale-95 transition-all">
+                            🗺️ 選擇指定地區
+                        </button>
                     </div>
                 </div>
-                <span class="text-xs font-bold text-orange-700 bg-white px-2.5 py-1 rounded-full shadow-sm">立即定位</span>
-            </button>
-
-            <!-- 最近搜尋地區紀錄 (若有) -->
-            <div id="recent-searches-box" class="hidden">
-                <span class="text-xs font-bold text-stone-400 block mb-1.5 uppercase tracking-wider">最近查詢地區</span>
-                <div id="recent-searches-chips" class="flex flex-wrap gap-1.5"></div>
             </div>
 
-            <!-- 自訂地點輸入區塊 -->
-            <div class="bg-stone-50 p-3.5 rounded-2xl border border-stone-200/80">
-                <label class="text-xs font-bold text-stone-500 block mb-1.5">輸入自訂鄉鎮市區 / 海外城市</label>
-                <div class="flex gap-2">
-                    <input id="custom-area-input" type="text" placeholder="例如：台中西區、東京新宿、台南中西區" class="flex-1 bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs text-stone-800 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
-                    <button onclick="handleCustomAreaSubmit()" class="tap-active px-4 py-2.5 bg-stone-900 text-white font-bold rounded-xl text-xs hover:bg-stone-800">
-                        設定地區
-                    </button>
-                </div>
-            </div>
+            <!-- 載入更多按鈕區 -->
+            <div id="pagination-container" class="w-full flex justify-center mt-6 mb-8"></div>
+        </section>
 
-            <!-- 熱門城市與商圈快捷清單 -->
+        <!-- 收藏夾列表 (預設隱藏) -->
+        <section id="favorites-section" class="hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-black text-stone-800 flex items-center gap-2">❤️ 我的口袋收藏名單</h2>
+                <button type="button" onclick="switchTab('explore')" class="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg">← 返回搜尋結果</button>
+            </div>
+            <div id="favorites-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+    </main>
+
+    <!-- 3. 右下角浮動工具按鈕 (隨機選店 & 回到頂部) -->
+    <div class="fixed bottom-5 right-4 z-30 flex flex-col items-end gap-2.5">
+        <button type="button" id="roulette-fab" onclick="openRoulette()" class="hidden bg-gradient-to-r from-orange-600 to-amber-500 text-white px-4 py-3 rounded-full shadow-lg font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-all">
+            <span class="text-base">🎲</span> 幫我選一家
+        </button>
+        <button type="button" id="back-to-top-btn" onclick="scrollToTop()" class="hidden bg-stone-900/90 text-white p-3 rounded-full shadow-lg active:scale-95 transition-all">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+        </button>
+    </div>
+
+    <!-- 4. 底部搜尋設定面板 (Bottom Sheet - 確保 hidden 隔離，絕不阻擋點擊) -->
+    <div id="bottom-sheet-overlay" onclick="closeBottomSheet()" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity"></div>
+    <div id="bottom-sheet" class="hidden fixed bottom-0 left-0 right-0 bg-white z-50 rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
+        <!-- 頂部拉柄與標題 -->
+        <div class="px-6 pt-4 pb-3 border-b border-stone-100 flex items-center justify-between flex-shrink-0">
+            <h3 id="sheet-title" class="text-base font-black text-stone-800">選擇搜尋地區</h3>
+            <button type="button" onclick="closeBottomSheet()" class="p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 text-xs font-bold">✕</button>
+        </div>
+
+        <!-- 可垂直捲動的內容區 -->
+        <div class="p-5 overflow-y-auto flex-grow space-y-5 overscroll-contain">
+            <!-- 自訂地區輸入框 -->
             <div>
-                <span class="text-xs font-bold text-stone-400 block mb-2 uppercase tracking-wider">熱門都會商圈 (點選即搜尋)</span>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <button onclick="selectTargetArea('台北市信義區', '台北市 信義區')" class="tap-active p-3 rounded-xl bg-stone-50 hover:bg-orange-50 hover:text-orange-700 border border-stone-200/70 text-left font-semibold transition-colors">台北市 信義區</button>
-                    <button onclick="selectTargetArea('台北市大安區', '台北市 大安區')" class="tap-active p-3 rounded-xl bg-stone-50 hover:bg-orange-50 hover:text-orange-700 border border-stone-200/70 text-left font-semibold transition-colors">台北市 大安區</button>
-                    <button onclick="selectTargetArea('台北市中山區', '台北市 中山區')" class="tap-active p-3 rounded-xl bg-stone-50 hover:bg-orange-50 hover:text-orange-700 border border-stone-200/70 text-left font-semibold transition-colors">台北市 中山區</button>
-                    <button onclick="selectTargetArea('台北市中正區', '台北市 中正區')" class="tap-active p-3 rounded-xl bg-stone-50 hover:bg-orange-50 hover:text-orange-700 border border-stone-200/70 text-left font-semibold transition-colors">台北市 中正區</button>
-                    <button onclick="selectTargetArea('新北市板橋區', '新北市 板橋區')" class="tap-active p-3 rounded-xl bg-stone-50 hover:bg-orange-50 hover:text-orange-700 border border-stone-200/70 text-left font-semibold transition-colors">新北市 板橋區</button>
-                    <button onclick="selectTargetArea('台中市西區', '台中市 西區')" class="tap-active p-3 rounded-xl bg-stone-50 hover:bg-orange-50 hover:text-orange-700 border border-stone-200/70 text-left font-semibold transition-colors">台中市 西區</button>
-                    <button onclick="selectTargetArea('台南市中西區', '台南市 中西區')" class="tap-active p-3 rounded-xl bg-stone-50 hover:bg-orange-50 hover:text-orange-700 border border-stone-200/70 text-left font-semibold transition-colors">台南市 中西區</button>
-                    <button onclick="selectTargetArea('高雄市左營區', '高雄市 左營區')" class="tap-active p-3 rounded-xl bg-stone-50 hover:bg-orange-50 hover:text-orange-700 border border-stone-200/70 text-left font-semibold transition-colors">高雄市 左營區</button>
-                    <button onclick="selectTargetArea('日本東京新宿', '🇯🇵 東京新宿 (老饕模式)')" class="tap-active p-3 rounded-xl bg-amber-50/80 hover:bg-amber-100 border border-amber-200/90 text-amber-950 text-left font-bold transition-colors">🇯🇵 東京新宿 (3.5★)</button>
-                    <button onclick="selectTargetArea('日本大阪難波', '🇯🇵 大阪難波 (老饕模式)')" class="tap-active p-3 rounded-xl bg-amber-50/80 hover:bg-amber-100 border border-amber-200/90 text-amber-950 text-left font-bold transition-colors">🇯🇵 大阪難波 (3.5★)</button>
+                <label class="text-xs font-bold text-stone-500 block mb-2">✏️ 手動輸入任何城市、行政區或地標（支援台灣、日本與全球）</label>
+                <div class="flex gap-2">
+                    <input type="text" id="custom-area-input" placeholder="例如：台中西區、東京新宿、大阪難波..." class="flex-grow bg-stone-100 border border-stone-300 focus:border-orange-500 focus:bg-white rounded-xl px-3.5 py-2.5 text-sm outline-none">
+                    <button type="button" onclick="confirmCustomArea()" class="bg-orange-600 text-white px-5 rounded-xl font-bold text-xs flex-shrink-0 active:scale-95">確認設定</button>
                 </div>
             </div>
 
-            <div class="h-6"></div>
+            <!-- 最近搜尋地區紀錄 -->
+            <div id="recent-areas-box" class="hidden">
+                <label class="text-xs font-bold text-stone-400 block mb-2">🕒 最近搜尋地點</label>
+                <div id="recent-areas-list" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- 熱門快速地區列表 -->
+            <div>
+                <label class="text-xs font-bold text-stone-400 block mb-2">📍 快速選擇熱門地區</label>
+                <div id="area-options-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+            </div>
         </div>
     </div>
 
-    <!-- 浮動 Toast 提示 -->
-    <div id="toast-notify" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 transform -translate-y-2">
-        <div class="bg-stone-900/95 backdrop-blur-md text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2">
-            <span id="toast-icon">ℹ️</span>
-            <span id="toast-text">提示訊息</span>
+    <!-- 5. 隨機抽籤輪盤 Modal -->
+    <div id="roulette-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center relative">
+            <button type="button" onclick="closeRoulette()" class="absolute top-4 right-4 w-8 h-8 bg-stone-100 rounded-full text-stone-500 font-bold">✕</button>
+            <div class="text-4xl mb-2">🎰</div>
+            <h3 class="text-lg font-black text-stone-900 mb-1">今天吃這家！</h3>
+            <p class="text-xs text-stone-500 mb-4">從目前篩選出的高評價好店中為您隨機欽點</p>
+            <div id="roulette-result-box" class="bg-stone-50 border border-stone-200 rounded-2xl p-4 mb-4 text-left"></div>
+            <div class="flex gap-2">
+                <button type="button" onclick="spinRoulette()" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold py-3 rounded-xl text-xs active:scale-95">🔄 再抽一次</button>
+                <a id="roulette-nav-link" href="#" target="_blank" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-1 active:scale-95">🗺️ 立即導航</a>
+            </div>
         </div>
     </div>
+
+    <!-- 6. 輕量通知 Toast -->
+    <div id="toast-box" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-stone-900/95 text-white px-4 py-2.5 rounded-full shadow-xl text-xs font-bold transition-all"></div>
 
     <script>
-        /* ==========================================================================
-           全域應用程式狀態 (含快取、老饕排序、自訂食物搜尋紀錄與二次快篩狀態)
-           ========================================================================== */
-        const PRESET_CUISINES = [
-            '', '牛肉麵', '火鍋', '日式料理', '韓式料理', '咖啡廳', '早午餐',
-            '拉麵', '燒肉', '義大利麵', '小吃', '甜點', '美式漢堡', '泰式料理', '居酒屋', '麵包店', '素食'
-        ];
-
-        const AppState = {
-            area: 'current_location',
-            areaName: '📍 目前位置附近',
-            cuisine: '',
-            cuisineName: '所有美食',
-            transportMode: 'walking', // 'walking' | 'driving'
-            displayMode: localStorage.getItem('food_explorer_view_mode') || 'magazine', // 'magazine' | 'compact'
-            sortBy: 'gourmet', // 'gourmet' (貝氏加權) | 'reviews' (評論數) | 'distance' (距離最近)
-            onlyOpenNow: false,
-            priceFilter: 'all', // 'all' | 'budget' | 'fancy'
-            isJapanRegion: false,
-            userLocation: null,
-            searchCenterLocation: null,
-            allRawPlaces: [],
-            enrichedPlaces: [], // 已通過路線與詳情驗證的餐廳清單
-            renderedCount: 0,
-            batchSize: 16,
-            isLoading: false,
-            viewMode: 'explore', // 'explore' | 'favorites'
-            favorites: JSON.parse(localStorage.getItem('food_explorer_favorites') || '[]'),
-            recentSearches: JSON.parse(localStorage.getItem('food_explorer_recent_searches') || '[]'),
-            recentCuisines: JSON.parse(localStorage.getItem('food_explorer_recent_cuisines') || '[]'),
-            detailsCache: new Map(),
-            routeCache: new Map(),
-            geocodeCache: new Map()
+        // ==========================================
+        // 1. 安全儲存封裝 (防止 file:// 或無痕模式崩潰)
+        // ==========================================
+        const memoryStore = {};
+        const safeStorage = {
+            get(key, fallback) {
+                try {
+                    const val = window.localStorage.getItem(key);
+                    return val ? JSON.parse(val) : fallback;
+                } catch (e) {
+                    return memoryStore[key] !== undefined ? memoryStore[key] : fallback;
+                }
+            },
+            set(key, value) {
+                try {
+                    memoryStore[key] = value;
+                    window.localStorage.setItem(key, JSON.stringify(value));
+                } catch (e) {
+                    memoryStore[key] = value;
+                }
+            }
         };
 
-        // Google Maps 服務實例
+        // ==========================================
+        // 2. 全域狀態管理與快取池
+        // ==========================================
+        const state = {
+            area: 'current_location',
+            areaName: '目前位置附近',
+            cuisine: '',
+            cuisineName: '所有美食',
+            mode: 'walking',       // 'walking' (10分) | 'driving' (5km)
+            sortBy: 'bayesian',    // 'bayesian' | 'reviews' | 'distance'
+            onlyOpenNow: false,
+            compactView: false,
+            isJapan: false,
+            activeTab: 'explore',  // 'explore' | 'favorites'
+            moreTagsExpanded: false
+        };
+
         let placesService = null;
         let directionsService = null;
         let geocoder = null;
+        let currentUserLocation = null;
 
-        // HTML 安全跳脫輔助函式 (防止單引號或特殊字元截斷)
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+        let candidatePlaces = [];  // 經過距離初篩的候選清單
+        let loadedDetailedPlaces = []; // 已經取得 getDetails 的完整店家清單
+        let placeDataMap = {};     // 以 place_id 為鍵的安全資料字典 (避免單引號問題)
+        let candidateCursor = 0;   // 目前處理到的候選指標
+        const BATCH_TARGET = 12;   // 每次載入目標呈現筆數
+
+        // 快取池 (節省 API 額度)
+        const detailsCache = {};
+        const routeCache = {};
+        const geocodeCache = {};
+
+        // 預設熱門地區清單
+        const PRESET_AREAS = [
+            { text: '📍 目前位置附近', value: 'current_location' },
+            { text: '台北市 信義區', value: '台北市信義區' },
+            { text: '台北市 大安區', value: '台北市大安區' },
+            { text: '台北市 中山區', value: '台北市中山區' },
+            { text: '台北市 松山區', value: '台北市松山區' },
+            { text: '台北市 中正區', value: '台北市中正區' },
+            { text: '台北市 西門/萬華', value: '台北市萬華區' },
+            { text: '台北市 內湖區', value: '台北市內湖區' },
+            { text: '台北市 士林區', value: '台北市士林區' },
+            { text: '新北市 板橋區', value: '新北市板橋區' },
+            { text: '新北市 中和區', value: '新北市中和區' },
+            { text: '新北市 永和區', value: '新北市永和區' },
+            { text: '新北市 新店區', value: '新北市新店區' },
+            { text: '新北市 新莊區', value: '新北市新莊區' },
+            { text: '🇯🇵 東京 新宿', value: '東京新宿' },
+            { text: '🇯🇵 東京 澀谷', value: '東京澀谷' },
+            { text: '🇯🇵 大阪 難波/道頓堀', value: '大阪難波' },
+            { text: '🇯🇵 京都 河原町', value: '京都河原町' }
+        ];
+
+        const DEFAULT_CUISINES = ['', '咖啡廳', '火鍋', '日式料理', '牛肉麵', '早午餐', '甜點', '小吃', '韓式料理', '義大利麵', '美式漢堡', '泰式料理', '燒肉', '居酒屋', '麵包店', '素食'];
+
+        // ==========================================
+        // 3. Google Maps 服務初始化與防呆確保
+        // ==========================================
+        function initMap() {
+            ensureMapServices();
+            renderRecentCustomFoodTags();
+            updateFavBadge();
+            // 靜默預先定位
+            getUserLocation(true).catch(() => {});
         }
+        window.initMap = initMap;
 
-        // 依 placeId 安全查找餐廳物件
-        function findPlaceById(placeId) {
-            return (
-                AppState.enrichedPlaces.find(p => p.place_id === placeId) ||
-                AppState.allRawPlaces.find(p => p.place_id === placeId) ||
-                AppState.favorites.find(p => p.place_id === placeId) ||
-                AppState.detailsCache.get(placeId)
-            );
-        }
-
-        // 老饕貝氏加權評分演算法 (Bayesian Average)
-        function computeGourmetScore(place, isJapan) {
-            const R = place.rating || 0;
-            const v = place.user_ratings_total || 0;
-            const m = 150; // 信賴評論數門檻
-            const C = isJapan ? 3.65 : 4.10; // 區域基準平均分
-            let score = (v / (v + m)) * R + (m / (v + m)) * C;
-
-            // 若非日本地區且觸發「高分破千則打卡行銷疑慮」，進行微幅權重校正，避免壓過真實私房名店
-            if (!isJapan && R > 4.8 && v > 1000) {
-                score -= 0.12;
-            }
-            return score;
-        }
-
-        // PWA 離線清單初始化
-        (function setupManifest() {
-            const manifestObj = {
-                name: "美食探險家",
-                short_name: "美食探險",
-                start_url: ".",
-                display: "standalone",
-                background_color: "#fafaf9",
-                theme_color: "#ea580c",
-                icons: [
-                    { src: "https://placehold.co/192x192/ea580c/ffffff?text=食", sizes: "192x192", type: "image/png" },
-                    { src: "https://placehold.co/512x512/ea580c/ffffff?text=食", sizes: "512x512", type: "image/png" }
-                ]
-            };
-            const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/json' });
-            document.getElementById('manifest-link').href = URL.createObjectURL(blob);
-        })();
-
-        /* ==========================================================================
-           Google 地圖服務初始化
-           ========================================================================== */
-        window.initMap = function() {
-            try {
-                const hiddenNode = document.createElement('div');
-                const fallbackCenter = { lat: 25.033964, lng: 121.564468 };
-                const mapInstance = new google.maps.Map(hiddenNode, { center: fallbackCenter, zoom: 14 });
-                
-                placesService = new google.maps.places.PlacesService(mapInstance);
+        function ensureMapServices() {
+            if (placesService && directionsService && geocoder) return true;
+            if (window.google && window.google.maps && window.google.maps.places) {
+                const dummyDiv = document.createElement('div');
+                const dummyMap = new google.maps.Map(dummyDiv, { center: { lat: 25.033964, lng: 121.564468 }, zoom: 14 });
+                placesService = new google.maps.places.PlacesService(dummyMap);
                 directionsService = new google.maps.DirectionsService();
                 geocoder = new google.maps.Geocoder();
-                
-                updateFavoritesCountUI();
-                renderRecentSearches();
-                renderRecentCuisineChips();
-                initViewModeUI();
-                console.log("[FoodExplorer] 老饕演算法與自訂美食搜尋引擎已就緒");
-                
-                acquireUserLocation(true).catch(() => {});
-            } catch (err) {
-                console.error("[FoodExplorer] 地圖初始化失敗:", err);
-                showToastNotification("地圖元件加載失敗，請確認 API Key 授權", "error");
+                return true;
+            }
+            return false;
+        }
+
+        // ==========================================
+        // 4. 所有 UI 互動按鈕函式 (明確掛載於 window)
+        // ==========================================
+        window.showToast = function(msg) {
+            const box = document.getElementById('toast-box');
+            if (!box) return;
+            box.textContent = msg;
+            box.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => box.classList.add('hidden'), 2600);
+        };
+
+        window.showError = function(msg) {
+            const errBox = document.getElementById('error-container');
+            const errText = document.getElementById('error-message-text');
+            if (!errBox || !errText) return;
+            errText.textContent = msg;
+            errBox.classList.remove('hidden');
+        };
+
+        window.hideError = function() {
+            const errBox = document.getElementById('error-container');
+            if (errBox) errBox.classList.add('hidden');
+        };
+
+        // 切換步行 / 開車模式
+        window.setTransportMode = function(mode) {
+            state.mode = mode;
+            const walkBtn = document.getElementById('mode-walking-btn');
+            const driveBtn = document.getElementById('mode-driving-btn');
+            if (mode === 'walking') {
+                walkBtn.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all bg-orange-600 text-white shadow-sm';
+                driveBtn.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all text-stone-600 hover:text-stone-900';
+            } else {
+                driveBtn.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all bg-orange-600 text-white shadow-sm';
+                walkBtn.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all text-stone-600 hover:text-stone-900';
+            }
+            showToast(mode === 'walking' ? '🚶 已切換為：步行 10 分鐘內' : '🚗 已切換為：開車 5 公里內');
+            performSearch(true);
+        };
+
+        // 快速點擊美食種類標籤
+        window.quickSearch = function(cuisine) {
+            state.cuisine = cuisine;
+            state.cuisineName = cuisine || '所有美食';
+
+            const input = document.getElementById('custom-cuisine-input');
+            const clearBtn = document.getElementById('clear-cuisine-btn');
+            if (input) {
+                input.value = DEFAULT_CUISINES.includes(cuisine) ? '' : cuisine;
+            }
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', !input || !input.value);
+            }
+
+            if (state.activeTab !== 'explore') {
+                switchTab('explore');
+            }
+            updateHeaderStatusUI();
+            performSearch(true);
+        };
+
+        // 手動提交想吃的食物表單
+        window.handleCustomFoodSubmit = function(e) {
+            if (e) e.preventDefault();
+            const input = document.getElementById('custom-cuisine-input');
+            if (!input) return;
+            const val = input.value.trim();
+            input.blur();
+
+            if (!val) {
+                quickSearch('');
+                return;
+            }
+
+            saveCustomFoodHistory(val);
+            state.cuisine = val;
+            state.cuisineName = val;
+            document.getElementById('clear-cuisine-btn').classList.remove('hidden');
+
+            if (state.activeTab !== 'explore') {
+                switchTab('explore');
+            }
+            updateHeaderStatusUI();
+            performSearch(true);
+        };
+
+        window.clearCustomCuisine = function() {
+            const input = document.getElementById('custom-cuisine-input');
+            const clearBtn = document.getElementById('clear-cuisine-btn');
+            if (input) input.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
+            quickSearch('');
+        };
+
+        // 展開 / 收合更多美食標籤
+        window.toggleMoreTags = function() {
+            state.moreTagsExpanded = !state.moreTagsExpanded;
+            const moreSpan = document.getElementById('more-cuisine-tags');
+            const btn = document.getElementById('toggle-more-tags-btn');
+            if (state.moreTagsExpanded) {
+                moreSpan.classList.remove('hidden');
+                btn.textContent = '－ 收起種類';
+            } else {
+                moreSpan.classList.add('hidden');
+                btn.textContent = '＋ 更多種類';
             }
         };
 
-        function acquireUserLocation(silent = false) {
+        // 儲存與渲染自訂美食搜尋歷史
+        function saveCustomFoodHistory(keyword) {
+            if (!keyword || DEFAULT_CUISINES.includes(keyword)) return;
+            let list = safeStorage.get('fe_custom_foods', []);
+            list = [keyword, ...list.filter(item => item !== keyword)].slice(0, 4);
+            safeStorage.set('fe_custom_foods', list);
+            renderRecentCustomFoodTags();
+        }
+
+        window.removeCustomFoodHistory = function(keyword, event) {
+            if (event) event.stopPropagation();
+            let list = safeStorage.get('fe_custom_foods', []);
+            list = list.filter(item => item !== keyword);
+            safeStorage.set('fe_custom_foods', list);
+            renderRecentCustomFoodTags();
+        };
+
+        function renderRecentCustomFoodTags() {
+            const container = document.getElementById('dynamic-custom-tags');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const list = safeStorage.get('fe_custom_foods', []);
+            list.forEach(item => {
+                const isActive = state.cuisine === item;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = isActive
+                    ? 'px-3 py-1.5 rounded-xl text-xs font-bold border transition-all bg-orange-600 text-white border-orange-600 shadow-sm flex items-center gap-1.5'
+                    : 'px-3 py-1.5 rounded-xl text-xs font-bold border transition-all bg-amber-50 text-amber-800 border-amber-200 hover:border-orange-400 flex items-center gap-1.5';
+                btn.onclick = () => quickSearch(item);
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = `🔍 ${item}`;
+                btn.appendChild(textSpan);
+
+                const delSpan = document.createElement('span');
+                delSpan.textContent = '✕';
+                delSpan.className = 'text-[10px] opacity-70 hover:opacity-100 px-1';
+                delSpan.onclick = (e) => window.removeCustomFoodHistory(item, e);
+                btn.appendChild(delSpan);
+
+                container.appendChild(btn);
+            });
+        }
+
+        function updateHeaderStatusUI() {
+            document.getElementById('header-area-label').textContent = state.areaName;
+            document.getElementById('header-cuisine-label').textContent = state.cuisineName;
+
+            document.querySelectorAll('.cuisine-chip').forEach(btn => {
+                const c = btn.getAttribute('data-cuisine');
+                if (c === state.cuisine) {
+                    btn.className = 'cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-orange-600 text-white border-orange-600 shadow-sm';
+                } else {
+                    btn.className = 'cuisine-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white text-stone-600 border-stone-200 hover:border-orange-300';
+                }
+            });
+            renderRecentCustomFoodTags();
+        }
+
+        // ==========================================
+        // 5. 地區選擇面板 (Bottom Sheet)
+        // ==========================================
+        window.openBottomSheet = function() {
+            renderAreaOptions();
+            document.getElementById('bottom-sheet-overlay').classList.remove('hidden');
+            document.getElementById('bottom-sheet').classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        };
+
+        window.closeBottomSheet = function() {
+            document.getElementById('bottom-sheet-overlay').classList.add('hidden');
+            document.getElementById('bottom-sheet').classList.add('hidden');
+            document.body.classList.remove('modal-open');
+        };
+
+        function renderAreaOptions() {
+            // 渲染最近地區
+            const recentBox = document.getElementById('recent-areas-box');
+            const recentList = document.getElementById('recent-areas-list');
+            const recentAreas = safeStorage.get('fe_recent_areas', []);
+            if (recentAreas.length > 0) {
+                recentBox.classList.remove('hidden');
+                recentList.innerHTML = '';
+                recentAreas.forEach(areaStr => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-bold active:scale-95';
+                    b.textContent = `🕒 ${areaStr}`;
+                    b.onclick = () => selectArea(areaStr, areaStr);
+                    recentList.appendChild(b);
+                });
+            } else {
+                recentBox.classList.add('hidden');
+            }
+
+            // 渲染預設熱門地區
+            const grid = document.getElementById('area-options-grid');
+            grid.innerHTML = '';
+            PRESET_AREAS.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                const isSelected = state.area === opt.value;
+                btn.className = isSelected
+                    ? 'p-3 rounded-xl text-xs font-bold text-left border bg-orange-600 text-white border-orange-600 shadow-sm'
+                    : 'p-3 rounded-xl text-xs font-bold text-left border bg-stone-50 text-stone-700 border-stone-200 hover:bg-orange-50 hover:border-orange-200';
+                btn.textContent = opt.text;
+                btn.onclick = () => selectArea(opt.value, opt.text.replace(/^📍\s*/, ''));
+                grid.appendChild(btn);
+            });
+        }
+
+        window.confirmCustomArea = function() {
+            const input = document.getElementById('custom-area-input');
+            const val = input.value.trim();
+            if (!val) {
+                showToast('請輸入地區名稱');
+                return;
+            }
+            let recent = safeStorage.get('fe_recent_areas', []);
+            recent = [val, ...recent.filter(x => x !== val)].slice(0, 5);
+            safeStorage.set('fe_recent_areas', recent);
+            input.value = '';
+            selectArea(val, val);
+        };
+
+        function selectArea(value, label) {
+            state.area = value;
+            state.areaName = label;
+            closeBottomSheet();
+            updateHeaderStatusUI();
+            performSearch(true);
+        }
+
+        // ==========================================
+        // 6. 核心搜尋與省流加速引擎
+        // ==========================================
+        function getUserLocation(silent = false) {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
-                    if (!silent) showToastNotification("裝置不支援定位功能", "warning");
-                    return reject(new Error("不支援 Geolocation"));
+                    if (!silent) showError('您的瀏覽器不支援定位功能，請點選右方按鈕手動選擇地區。');
+                    reject(new Error('不支援定位'));
+                    return;
                 }
-
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        AppState.userLocation = {
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude
-                        };
-                        resolve(AppState.userLocation);
+                        currentUserLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        resolve(currentUserLocation);
                     },
                     (err) => {
-                        AppState.userLocation = null;
+                        currentUserLocation = null;
                         if (!silent) {
-                            if (err.code === err.PERMISSION_DENIED) {
-                                showToastNotification("未允許定位授權，請點選右上角手動設定地區", "warning");
-                            } else {
-                                showToastNotification("定位逾時，請手動選取商圈", "warning");
-                            }
+                            showError('無法取得目前定位（可能因本地檔案限制或未授權），請改用「手動選地區」即可正常搜尋！');
                         }
                         reject(err);
                     },
@@ -637,1216 +660,382 @@
             });
         }
 
-        /* ==========================================================================
-           頂部 Header 滾動收折機制
-           ========================================================================== */
-        let lastScrollPosition = 0;
-        let isHeaderCollapsed = false;
-        const collapsibleControls = document.getElementById('collapsible-controls');
-        const collapsedPillBar = document.getElementById('collapsed-pill-bar');
-        const floatingTopBtn = document.getElementById('floating-top-btn');
-        const floatingRandomBtn = document.getElementById('floating-random-btn');
+        async function performSearch(isInitial = true) {
+            hideError();
+            updateHeaderStatusUI();
 
-        window.addEventListener('scroll', () => {
-            const currentY = window.scrollY;
-            
-            if (currentY > 280) {
-                floatingTopBtn.classList.remove('hidden');
-                if (AppState.enrichedPlaces.length > 0) floatingRandomBtn.classList.remove('hidden');
-            } else {
-                floatingTopBtn.classList.add('hidden');
-                floatingRandomBtn.classList.add('hidden');
+            // 1. 立即呈現骨架屏，讓使用者感受到按鈕即時反應
+            if (isInitial) {
+                candidatePlaces = [];
+                loadedDetailedPlaces = [];
+                candidateCursor = 0;
+                document.getElementById('pagination-container').innerHTML = '';
+                showLoadingSkeleton();
             }
 
-            // 當使用者正在輸入框打字時，不自動收折頂部面板
-            if (document.activeElement && document.activeElement.id === 'custom-cuisine-input') {
-                return;
-            }
-
-            if (currentY > 95 && currentY > lastScrollPosition) {
-                if (!isHeaderCollapsed) collapseControlsHeader();
-            } else if (currentY < lastScrollPosition - 15 || currentY <= 30) {
-                if (isHeaderCollapsed) expandControlsHeader();
-            }
-
-            lastScrollPosition = Math.max(0, currentY);
-        }, { passive: true });
-
-        function collapseControlsHeader() {
-            isHeaderCollapsed = true;
-            collapsibleControls.classList.add('collapsed');
-            collapsedPillBar.classList.add('active');
-            updateCollapsedPillText();
-        }
-
-        window.expandControlsHeader = function() {
-            isHeaderCollapsed = false;
-            collapsibleControls.classList.remove('collapsed');
-            collapsedPillBar.classList.remove('active');
-        };
-
-        window.expandAndFocusFoodInput = function() {
-            expandControlsHeader();
-            setTimeout(() => {
-                const inputEl = document.getElementById('custom-cuisine-input');
-                if (inputEl) inputEl.focus();
-            }, 150);
-        };
-
-        function updateCollapsedPillText() {
-            const areaShort = AppState.areaName.replace('📍 ', '').replace('🇯🇵 ', '');
-            const cuisineShort = AppState.cuisineName || '全部';
-            const modeIcon = AppState.transportMode === 'walking' ? '🚶 步行' : '🚗 開車';
-            document.getElementById('collapsed-summary-text').textContent = `📍 ${areaShort} · 🍽️ ${cuisineShort} · ${modeIcon}`;
-        }
-
-        window.toggleMoreTags = function() {
-            const tray = document.getElementById('more-tags-tray');
-            const btn = document.getElementById('toggle-more-tags-btn');
-            if (tray.classList.contains('hidden')) {
-                tray.classList.remove('hidden');
-                btn.innerHTML = '<span>收起 ▲</span>';
-            } else {
-                tray.classList.add('hidden');
-                btn.innerHTML = '<span>＋更多種類</span>';
-            }
-        };
-
-        /* ==========================================================================
-           手動搜尋食物種類 / 店名功能 (Custom Cuisine Search & History)
-           ========================================================================== */
-        window.toggleClearCuisineBtn = function() {
-            const inputEl = document.getElementById('custom-cuisine-input');
-            const clearBtn = document.getElementById('clear-cuisine-btn');
-            if (inputEl.value.trim().length > 0) {
-                clearBtn.classList.remove('hidden');
-            } else {
-                clearBtn.classList.add('hidden');
-            }
-        };
-
-        window.clearCustomCuisineInput = function() {
-            const inputEl = document.getElementById('custom-cuisine-input');
-            inputEl.value = '';
-            toggleClearCuisineBtn();
-            if (AppState.cuisine !== '') {
-                handleQuickSelect('');
-            } else {
-                inputEl.focus();
-            }
-        };
-
-        window.handleCustomCuisineSubmit = function(event) {
-            if (event) event.preventDefault();
-            const inputEl = document.getElementById('custom-cuisine-input');
-            const val = inputEl.value.trim();
-            inputEl.blur(); // 自動收起手機虛擬鍵盤，直接呈現搜尋結果
-
-            if (!val) {
-                handleQuickSelect('');
-                return;
-            }
-
-            // 若為非預設標籤的自訂食物，存入最近自訂美食紀錄
-            if (!PRESET_CUISINES.includes(val)) {
-                saveRecentCuisine(val);
-            }
-
-            handleQuickSelect(val);
-        };
-
-        function saveRecentCuisine(keyword) {
-            AppState.recentCuisines = AppState.recentCuisines.filter(item => item !== keyword);
-            AppState.recentCuisines.unshift(keyword);
-            if (AppState.recentCuisines.length > 4) {
-                AppState.recentCuisines.pop();
-            }
-            localStorage.setItem('food_explorer_recent_cuisines', JSON.stringify(AppState.recentCuisines));
-            renderRecentCuisineChips();
-        }
-
-        window.removeRecentCuisine = function(keyword, event) {
-            if (event) event.stopPropagation();
-            AppState.recentCuisines = AppState.recentCuisines.filter(item => item !== keyword);
-            localStorage.setItem('food_explorer_recent_cuisines', JSON.stringify(AppState.recentCuisines));
-            renderRecentCuisineChips();
-            if (AppState.cuisine === keyword) {
-                handleQuickSelect('');
-            }
-        };
-
-        function renderRecentCuisineChips() {
-            const container = document.getElementById('recent-cuisine-tags');
-            if (!container) return;
-            container.innerHTML = '';
-
-            AppState.recentCuisines.forEach(item => {
-                // 若當前正選中該自訂標籤，已由 #custom-active-tag 顯示，避免重複
-                if (AppState.cuisine === item && !PRESET_CUISINES.includes(item)) return;
-
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = "tap-active px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 flex items-center gap-1 transition-all";
-                btn.innerHTML = `
-                    <span>🕒 ${escapeHtml(item)}</span>
-                    <span class="text-amber-400 hover:text-amber-800 pl-0.5" title="移除紀錄">×</span>
-                `;
-                btn.onclick = (e) => {
-                    if (e.target.textContent === '×') {
-                        removeRecentCuisine(item, e);
-                    } else {
-                        handleQuickSelect(item);
-                    }
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        /* ==========================================================================
-           多維度排序與零延遲二次快篩 (老饕推薦 / 評論數 / 距離 + 營業中 / 價位)
-           ========================================================================== */
-        window.changeSortBy = async function(sortMode) {
-            if (AppState.sortBy === sortMode) return;
-            AppState.sortBy = sortMode;
-
-            document.querySelectorAll('.sort-btn').forEach(btn => {
-                if (btn.getAttribute('data-sort') === sortMode) {
-                    btn.className = "sort-btn tap-active px-2.5 py-1 rounded-md text-xs font-bold bg-white text-orange-600 shadow-sm transition-all";
-                } else {
-                    btn.className = "sort-btn tap-active px-2.5 py-1 rounded-md text-xs font-semibold text-stone-600 hover:text-stone-900 transition-all";
-                }
-            });
-
-            if (AppState.viewMode === 'explore' && AppState.allRawPlaces.length > 0) {
-                sortRawCandidates();
-                AppState.renderedCount = 0;
-                AppState.enrichedPlaces = [];
-                await renderCardsBatch(true);
-            }
-        };
-
-        function sortRawCandidates() {
-            if (AppState.sortBy === 'gourmet') {
-                AppState.allRawPlaces.sort((a, b) => (b.gourmetScore || 0) - (a.gourmetScore || 0));
-            } else if (AppState.sortBy === 'reviews') {
-                AppState.allRawPlaces.sort((a, b) => (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
-            } else if (AppState.sortBy === 'distance') {
-                AppState.allRawPlaces.sort((a, b) => (a.linearDistanceMeters || 999999) - (b.linearDistanceMeters || 999999));
-            }
-        }
-
-        window.toggleOpenNowFilter = function() {
-            AppState.onlyOpenNow = !AppState.onlyOpenNow;
-            const btn = document.getElementById('filter-open-btn');
-            if (AppState.onlyOpenNow) {
-                btn.className = "tap-active px-2.5 py-1 rounded-lg text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-800 flex items-center gap-1 transition-all shadow-sm";
-            } else {
-                btn.className = "tap-active px-2.5 py-1 rounded-lg text-xs font-semibold border border-stone-200 bg-stone-50 text-stone-600 flex items-center gap-1 transition-all";
-            }
-            applyClientFiltersAndRender();
-        };
-
-        window.changePriceFilter = function(val) {
-            AppState.priceFilter = val;
-            applyClientFiltersAndRender();
-        };
-
-        function getFilteredEnrichedPlaces() {
-            return AppState.enrichedPlaces.filter(p => {
-                // 營業中過濾
-                if (AppState.onlyOpenNow) {
-                    const isOpen = getPlaceOpenStatus(p);
-                    if (isOpen !== true) return false;
-                }
-                // 價位過濾
-                if (AppState.priceFilter === 'budget') {
-                    if (p.price_level && p.price_level > 2) return false;
-                } else if (AppState.priceFilter === 'fancy') {
-                    if (!p.price_level || p.price_level < 3) return false;
-                }
-                return true;
-            });
-        }
-
-        function getPlaceOpenStatus(p) {
-            if (!p.opening_hours) return undefined;
-            if (typeof p.opening_hours.isOpen === 'function') {
-                try { return p.opening_hours.isOpen(); } catch (e) {}
-            }
-            if (typeof p.opening_hours.open_now === 'boolean') {
-                return p.opening_hours.open_now;
-            }
-            return undefined;
-        }
-
-        function applyClientFiltersAndRender() {
-            if (AppState.viewMode === 'favorites') {
-                renderFavoritesList();
-                return;
-            }
-            const grid = document.getElementById('results-grid');
-            grid.innerHTML = '';
-            const filtered = getFilteredEnrichedPlaces();
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full py-14 text-center">
-                        <div class="text-3xl mb-2">🔍</div>
-                        <h4 class="text-sm font-bold text-stone-800">目前載入的餐廳中，沒有符合此篩選條件的店家</h4>
-                        <p class="text-xs text-stone-400 mt-1">您可以放寬「營業中 / 價位」篩選，或點擊下方「載入更多店家」</p>
-                    </div>
-                `;
-            } else {
-                filtered.forEach((p, idx) => {
-                    grid.appendChild(createRestaurantCard(p, idx));
-                });
-            }
-
-            const cuisineLabel = AppState.cuisine ? `「${AppState.cuisine}」` : '優選餐廳';
-            document.getElementById('results-count-text').textContent = `顯示 ${filtered.length} 家${cuisineLabel} (周圍候選 ${AppState.allRawPlaces.length} 家)`;
-        }
-
-        /* ==========================================================================
-           大圖 / 緊湊清單 雙重視圖切換
-           ========================================================================== */
-        window.switchViewMode = function(mode) {
-            if (AppState.displayMode === mode) return;
-            AppState.displayMode = mode;
-            localStorage.setItem('food_explorer_view_mode', mode);
-            initViewModeUI();
-
-            if (AppState.viewMode === 'favorites') {
-                renderFavoritesList();
-            } else if (AppState.enrichedPlaces.length > 0) {
-                applyClientFiltersAndRender();
-            }
-        };
-
-        function initViewModeUI() {
-            const magBtn = document.getElementById('view-magazine-btn');
-            const cmpBtn = document.getElementById('view-compact-btn');
-            const grid = document.getElementById('results-grid');
-
-            if (AppState.displayMode === 'compact') {
-                cmpBtn.className = "tap-active px-2.5 py-1 rounded-md text-xs font-bold bg-white text-orange-600 shadow-sm flex items-center gap-1";
-                magBtn.className = "tap-active px-2.5 py-1 rounded-md text-xs font-semibold text-stone-600 flex items-center gap-1";
-                grid.className = "grid grid-cols-1 md:grid-cols-2 gap-2.5";
-            } else {
-                magBtn.className = "tap-active px-2.5 py-1 rounded-md text-xs font-bold bg-white text-orange-600 shadow-sm flex items-center gap-1";
-                cmpBtn.className = "tap-active px-2.5 py-1 rounded-md text-xs font-semibold text-stone-600 flex items-center gap-1";
-                grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5";
-            }
-        }
-
-        /* ==========================================================================
-           🎲 吃什麼輪盤 (幫我選一家隨機挑店)
-           ========================================================================== */
-        window.triggerRandomPick = function() {
-            const activePool = AppState.viewMode === 'favorites' ? AppState.favorites : getFilteredEnrichedPlaces();
-            const candidates = activePool.length > 0 ? activePool : AppState.enrichedPlaces;
-
-            if (!candidates || candidates.length === 0) {
-                showToastNotification("請先搜尋餐廳，才能幫您隨機挑選喔！", "warning");
-                return;
-            }
-
-            const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-            const modal = document.getElementById('random-picker-modal');
-            const content = document.getElementById('random-card-content');
-            
-            const photoUrl = chosen.photoUrl || chosen.photos?.[0]?.getUrl({ maxWidth: 450, maxHeight: 300 }) || 'https://placehold.co/400x260/f5f5f4/78716c?text=推薦店家';
-            const mapLink = chosen.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(chosen.name)}&query_place_id=${chosen.place_id}`;
-            const safeName = escapeHtml(chosen.name);
-            const safeAddress = escapeHtml(chosen.formatted_address || chosen.vicinity || '附近精選名店');
-
-            content.innerHTML = `
-                <div class="text-center mb-3">
-                    <span class="inline-block p-2 rounded-2xl bg-orange-100 text-orange-600 text-2xl mb-1">🎉</span>
-                    <h3 class="text-base font-extrabold text-stone-900">命中註定的美味！</h3>
-                    <p class="text-xs text-stone-500">不用再煩惱了，今天就吃這一家：</p>
-                </div>
-
-                <div class="rounded-2xl overflow-hidden border border-stone-200/90 mb-3 bg-stone-50">
-                    <div class="aspect-video w-full relative">
-                        <img src="${photoUrl}" alt="${safeName}" class="w-full h-full object-cover">
-                        <div class="absolute top-2.5 right-2.5 bg-amber-500 text-white font-black text-xs px-2 py-0.5 rounded-lg shadow-sm">
-                            ★ ${chosen.rating ? chosen.rating.toFixed(1) : '–'}
-                        </div>
-                    </div>
-                    <div class="p-3">
-                        <h4 class="text-sm font-bold text-stone-900 truncate mb-1">${safeName}</h4>
-                        <p class="text-xs text-stone-500 truncate mb-1.5">📍 ${safeAddress}</p>
-                        <div class="flex items-center justify-between">
-                            ${chosen.travelInfo ? `<span class="inline-block text-xs font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded">${chosen.travelInfo.isWalking ? '🚶' : '🚗'} ${escapeHtml(chosen.travelInfo.text)}</span>` : '<span></span>'}
-                            <button onclick="handleSharePlace('${chosen.place_id}', event)" class="tap-active text-xs font-bold text-stone-600 bg-white border border-stone-200 px-2.5 py-1 rounded-lg hover:bg-stone-100">
-                                💬 分享問朋友
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex gap-2">
-                    <button onclick="triggerRandomPick()" class="tap-active flex-1 py-2.5 rounded-xl border border-stone-200 text-xs font-bold text-stone-700 hover:bg-stone-50">
-                        🔄 換一家
-                    </button>
-                    <a href="${mapLink}" target="_blank" rel="noopener noreferrer" class="tap-active flex-1 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold text-center flex items-center justify-center gap-1 shadow-sm shadow-orange-200">
-                        <span>出發導航</span>
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                    </a>
-                </div>
-
-                <button onclick="closeRandomPickerModal()" class="w-full mt-2.5 py-1.5 text-xs text-stone-400 hover:text-stone-600 font-medium text-center">
-                    關閉
-                </button>
-            `;
-
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            modal.querySelector('#random-card-content').classList.remove('scale-95');
-            document.body.classList.add('prevent-scroll');
-        };
-
-        window.closeRandomPickerModal = function() {
-            const modal = document.getElementById('random-picker-modal');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            modal.querySelector('#random-card-content').classList.add('scale-95');
-            document.body.classList.remove('prevent-scroll');
-        };
-
-        document.getElementById('random-picker-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'random-picker-modal') closeRandomPickerModal();
-        });
-
-        /* ==========================================================================
-           使用者反饋、安全複製地址與原生分享 (支援單引號店名與 LINE 分享)
-           ========================================================================== */
-        let toastTimeout = null;
-        function showToastNotification(message, type = 'info') {
-            const toastEl = document.getElementById('toast-notify');
-            const iconEl = document.getElementById('toast-icon');
-            const textEl = document.getElementById('toast-text');
-            
-            const icons = {
-                info: '💡',
-                success: '✅',
-                warning: '⚠️',
-                error: '❌',
-                heart: '❤️'
-            };
-
-            iconEl.textContent = icons[type] || '💡';
-            textEl.textContent = message;
-
-            toastEl.classList.remove('opacity-0', '-translate-y-2');
-            toastEl.classList.add('opacity-100', 'translate-y-0');
-
-            if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toastEl.classList.remove('opacity-100', 'translate-y-0');
-                toastEl.classList.add('opacity-0', '-translate-y-2');
-            }, 2800);
-        }
-
-        function copyTextSilently(text, successMsg) {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => {
-                    showToastNotification(successMsg, "success");
-                }).catch(() => fallbackCopyText(text, successMsg));
-            } else {
-                fallbackCopyText(text, successMsg);
-            }
-        }
-
-        function fallbackCopyText(text, successMsg) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                document.execCommand('copy');
-                showToastNotification(successMsg, "success");
-            } catch (err) {
-                showToastNotification("複製失敗，請手動複製", "warning");
-            }
-            document.body.removeChild(textarea);
-        }
-
-        window.handleCopyAddress = function(placeId, event) {
-            if (event) event.stopPropagation();
-            const target = findPlaceById(placeId);
-            if (!target) return;
-            const addr = target.formatted_address || target.vicinity || target.name;
-            copyTextSilently(addr, "已複製店家地址到剪貼簿");
-        };
-
-        window.handleSharePlace = async function(placeId, event) {
-            if (event) event.stopPropagation();
-            const target = findPlaceById(placeId);
-            if (!target) return;
-
-            const mapLink = target.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(target.name)}&query_place_id=${target.place_id}`;
-            const addr = target.formatted_address || target.vicinity || '';
-            const shareText = `🍽️ ${target.name} (★${target.rating || '–'} · ${target.user_ratings_total || 0}則評論)\n📍 ${addr}`;
-
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: `美食推薦：${target.name}`,
-                        text: shareText,
-                        url: mapLink
-                    });
+            // 2. 確保 Google Maps API 已就緒
+            if (!ensureMapServices()) {
+                // 等待 800ms 再試一次
+                await new Promise(r => setTimeout(r, 800));
+                if (!ensureMapServices()) {
+                    document.getElementById('results-container').innerHTML = '';
+                    showError('Google Maps API 尚未完成載入，請確認網路連線或 API 金鑰網域授權設定。');
                     return;
-                } catch (err) {
-                    if (err.name === 'AbortError') return;
                 }
-            }
-            copyTextSilently(`${shareText}\n🗺️ ${mapLink}`, "已複製餐廳資訊與連結，可直接貼上 LINE 分享！");
-        };
-
-        /* ==========================================================================
-           我的收藏管理 (Favorites Engine)
-           ========================================================================== */
-        window.toggleFavorite = function(placeId, event) {
-            if (event) event.stopPropagation();
-            
-            const heartBtn = document.querySelector(`[data-fav-btn="${placeId}"]`);
-            if (heartBtn) {
-                heartBtn.classList.add('animate-pop');
-                setTimeout(() => heartBtn.classList.remove('animate-pop'), 350);
-            }
-
-            const existingIndex = AppState.favorites.findIndex(item => item.place_id === placeId);
-            if (existingIndex >= 0) {
-                AppState.favorites.splice(existingIndex, 1);
-                showToastNotification("已從收藏名單移除", "info");
-            } else {
-                const target = findPlaceById(placeId);
-                if (target) {
-                    const minimalSave = {
-                        place_id: target.place_id,
-                        name: target.name,
-                        rating: target.rating,
-                        user_ratings_total: target.user_ratings_total,
-                        gourmetScore: target.gourmetScore,
-                        formatted_address: target.formatted_address || target.vicinity || '',
-                        photoUrl: target.photoUrl || target.photos?.[0]?.getUrl({ maxWidth: 450, maxHeight: 300 }) || '',
-                        url: target.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(target.name)}&query_place_id=${target.place_id}`,
-                        formatted_phone_number: target.formatted_phone_number || '',
-                        price_level: target.price_level,
-                        travelInfo: target.travelInfo,
-                        isJapan: AppState.isJapanRegion
-                    };
-                    AppState.favorites.unshift(minimalSave);
-                    showToastNotification("已加入我的美食珍藏！", "heart");
-                }
-            }
-
-            localStorage.setItem('food_explorer_favorites', JSON.stringify(AppState.favorites));
-            updateFavoritesCountUI();
-            
-            if (AppState.viewMode === 'favorites') {
-                renderFavoritesList();
-            } else {
-                updateCardHeartIcon(placeId);
-            }
-        };
-
-        function updateFavoritesCountUI() {
-            document.getElementById('fav-count').textContent = AppState.favorites.length;
-        }
-
-        function updateCardHeartIcon(placeId) {
-            const btn = document.querySelector(`[data-fav-btn="${placeId}"]`);
-            if (btn) {
-                const isFav = AppState.favorites.some(f => f.place_id === placeId);
-                btn.innerHTML = isFav ? '❤️' : '🤍';
-            }
-        }
-
-        document.getElementById('favorites-toggle-btn').addEventListener('click', () => {
-            const secBar = document.getElementById('secondary-filter-bar');
-            if (AppState.viewMode === 'explore') {
-                AppState.viewMode = 'favorites';
-                document.getElementById('favorites-toggle-btn').classList.add('bg-rose-100', 'text-rose-700', 'border-rose-200');
-                secBar.classList.add('hidden');
-                renderFavoritesList();
-            } else {
-                AppState.viewMode = 'explore';
-                document.getElementById('favorites-toggle-btn').classList.remove('bg-rose-100', 'text-rose-700', 'border-rose-200');
-                secBar.classList.remove('hidden');
-                if (AppState.enrichedPlaces.length > 0) {
-                    document.getElementById('results-meta-header').classList.remove('hidden');
-                    updateResultsHeaderBadge();
-                    applyClientFiltersAndRender();
-                    updatePaginationUI();
-                } else {
-                    document.getElementById('results-grid').innerHTML = `
-                        <div class="col-span-full py-16 text-center text-stone-400 text-xs font-medium">
-                            點擊上方標籤或輸入關鍵字開始探索美食
-                        </div>
-                    `;
-                }
-            }
-        });
-
-        function renderFavoritesList() {
-            const grid = document.getElementById('results-grid');
-            const metaHeader = document.getElementById('results-meta-header');
-            const paginationEl = document.getElementById('pagination-controls');
-            paginationEl.innerHTML = '';
-
-            if (AppState.favorites.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full py-16 text-center">
-                        <div class="text-4xl mb-2">💔</div>
-                        <h4 class="text-sm font-bold text-stone-800">目前尚無收藏店家</h4>
-                        <p class="text-xs text-stone-400 mt-1">在探索美食時，點擊卡片上的愛心即可存入名單</p>
-                    </div>
-                `;
-                return;
-            }
-
-            metaHeader.classList.remove('hidden');
-            document.getElementById('results-count-text').textContent = `我的珍藏清單 (${AppState.favorites.length} 家)`;
-            document.getElementById('results-filter-badge').textContent = '❤️ 收藏模式';
-            document.getElementById('results-filter-badge').className = 'bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-md font-bold text-xs';
-
-            grid.innerHTML = '';
-            AppState.favorites.forEach((favPlace, idx) => {
-                grid.appendChild(createRestaurantCard(favPlace, idx, true));
-            });
-        }
-
-        /* ==========================================================================
-           交通方式與快篩事件交互 (整合預設標籤與自訂食物輸入同步)
-           ========================================================================== */
-        window.switchTransportMode = function(mode) {
-            if (AppState.transportMode === mode) return;
-            AppState.transportMode = mode;
-
-            const walkBtn = document.getElementById('mode-walk-btn');
-            const driveBtn = document.getElementById('mode-drive-btn');
-
-            if (mode === 'walking') {
-                walkBtn.className = "tap-active py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-white text-orange-600 shadow-sm transition-all";
-                driveBtn.className = "tap-active py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 text-stone-600 hover:text-stone-900 transition-all";
-            } else {
-                driveBtn.className = "tap-active py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-white text-orange-600 shadow-sm transition-all";
-                walkBtn.className = "tap-active py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 text-stone-600 hover:text-stone-900 transition-all";
-            }
-
-            updateCollapsedPillText();
-
-            if (AppState.allRawPlaces.length > 0 || AppState.cuisine !== '') {
-                executeSearch(true);
-            }
-        };
-
-        window.handleQuickSelect = function(cuisineName) {
-            if (AppState.viewMode === 'favorites') {
-                AppState.viewMode = 'explore';
-                document.getElementById('favorites-toggle-btn').classList.remove('bg-rose-100', 'text-rose-700');
-                document.getElementById('secondary-filter-bar').classList.remove('hidden');
-            }
-
-            AppState.cuisine = cuisineName;
-            AppState.cuisineName = cuisineName || '所有美食';
-
-            // 同步更新手動搜尋輸入框與清除鈕
-            const inputEl = document.getElementById('custom-cuisine-input');
-            if (inputEl) {
-                inputEl.value = cuisineName;
-                toggleClearCuisineBtn();
-            }
-
-            // 判斷是否為預設標籤，或是使用者手動輸入的自訂美食
-            let matchedPreset = false;
-            document.querySelectorAll('.tag-btn').forEach(btn => {
-                if (btn.getAttribute('data-cuisine') === cuisineName) {
-                    matchedPreset = true;
-                    btn.className = "tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-600 text-white shadow-sm";
-                    // 若該標籤位於「＋更多種類」內，確保展開顯示
-                    const moreTray = document.getElementById('more-tags-tray');
-                    if (moreTray && moreTray.contains(btn) && moreTray.classList.contains('hidden')) {
-                        toggleMoreTags();
-                    }
-                } else {
-                    btn.className = "tag-btn tap-active px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200/70";
-                }
-            });
-
-            // 處理動態自訂標籤顯示
-            const customTagBtn = document.getElementById('custom-active-tag');
-            const customTagText = document.getElementById('custom-active-tag-text');
-            if (!matchedPreset && cuisineName) {
-                customTagText.textContent = `🔍 ${cuisineName}`;
-                customTagBtn.classList.remove('hidden');
-            } else {
-                customTagBtn.classList.add('hidden');
-            }
-
-            renderRecentCuisineChips();
-            updateCollapsedPillText();
-            executeSearch(true);
-        };
-
-        /* ==========================================================================
-           地區選取 Bottom Sheet 控制與歷史紀錄
-           ========================================================================== */
-        const sheetOverlay = document.getElementById('sheet-overlay');
-        const sheetModal = document.getElementById('sheet-modal');
-
-        document.getElementById('search-trigger-btn').addEventListener('click', () => {
-            renderRecentSearches();
-            sheetOverlay.classList.add('active');
-            sheetModal.classList.add('active');
-            document.body.classList.add('prevent-scroll');
-        });
-
-        window.closeLocationSheet = function() {
-            sheetModal.classList.remove('active');
-            sheetOverlay.classList.remove('active');
-            document.body.classList.remove('prevent-scroll');
-        };
-
-        sheetOverlay.addEventListener('click', closeLocationSheet);
-
-        window.selectTargetArea = function(areaKey, displayName) {
-            AppState.area = areaKey;
-            AppState.areaName = displayName;
-            document.getElementById('search-bar-label').textContent = displayName.replace('📍 ', '').replace('🇯🇵 ', '');
-            
-            if (areaKey !== 'current_location') {
-                saveRecentSearch(displayName, areaKey);
-            }
-
-            updateCollapsedPillText();
-            closeLocationSheet();
-            executeSearch(true);
-        };
-
-        window.handleCustomAreaSubmit = function() {
-            const inputVal = document.getElementById('custom-area-input').value.trim();
-            if (!inputVal) {
-                showToastNotification("請輸入有效的商圈或行政區名稱", "warning");
-                return;
-            }
-            selectTargetArea(inputVal, inputVal);
-        };
-
-        function saveRecentSearch(name, key) {
-            AppState.recentSearches = AppState.recentSearches.filter(item => item.key !== key);
-            AppState.recentSearches.unshift({ name, key });
-            if (AppState.recentSearches.length > 4) AppState.recentSearches.pop();
-            localStorage.setItem('food_explorer_recent_searches', JSON.stringify(AppState.recentSearches));
-        }
-
-        function renderRecentSearches() {
-            const box = document.getElementById('recent-searches-box');
-            const chips = document.getElementById('recent-searches-chips');
-            if (AppState.recentSearches.length === 0) {
-                box.classList.add('hidden');
-                return;
-            }
-            box.classList.remove('hidden');
-            chips.innerHTML = '';
-            AppState.recentSearches.forEach(item => {
-                const btn = document.createElement('button');
-                btn.className = "tap-active px-3 py-1 bg-stone-100 hover:bg-orange-50 text-stone-700 text-xs font-semibold rounded-lg border border-stone-200 transition-colors";
-                btn.textContent = `🕒 ${item.name}`;
-                btn.onclick = () => selectTargetArea(item.key, item.name);
-                chips.appendChild(btn);
-            });
-        }
-
-        floatingTopBtn.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            expandControlsHeader();
-        });
-
-        /* ==========================================================================
-           核心搜尋引擎：預先幾何距離初篩 + 老饕貝氏加權 + 省流排序
-           ========================================================================== */
-        async function executeSearch(reset = true) {
-            if (!placesService) {
-                showToastNotification("地圖服務加載中，請稍候重試", "warning");
-                return;
-            }
-
-            const resultsGrid = document.getElementById('results-grid');
-            const metaHeader = document.getElementById('results-meta-header');
-            const paginationEl = document.getElementById('pagination-controls');
-
-            if (reset) {
-                AppState.allRawPlaces = [];
-                AppState.enrichedPlaces = [];
-                AppState.renderedCount = 0;
-                paginationEl.innerHTML = '';
-                renderLoadingSkeletons();
             }
 
             try {
-                if (AppState.area === 'current_location' && !AppState.userLocation) {
-                    await acquireUserLocation();
+                let searchCenter = null;
+
+                if (state.area === 'current_location') {
+                    if (!currentUserLocation) {
+                        await getUserLocation(false);
+                    }
+                    searchCenter = currentUserLocation;
+                } else {
+                    const geoData = await geocodeAddress(state.area);
+                    searchCenter = geoData.location;
+                    state.isJapan = geoData.isJapan;
                 }
 
-                if (reset) {
-                    const fetchedPlaces = await fetchCandidatePlaces(AppState.area, AppState.userLocation);
-                    if (fetchedPlaces.length === 0) {
-                        const targetCuisineText = AppState.cuisine ? `「${escapeHtml(AppState.cuisine)}」` : '符合條件的美味餐廳';
-                        resultsGrid.innerHTML = `
-                            <div class="col-span-full py-16 text-center">
-                                <div class="text-4xl mb-2">🍽️</div>
-                                <h4 class="text-sm font-bold text-stone-800">附近找不到 ${targetCuisineText}</h4>
-                                <p class="text-xs text-stone-400 mt-1">試試切換為「🚗 開車 (5公里範圍)」，或換個關鍵字再試一次</p>
+                // 抓取候選名單並做免費直線距離初篩
+                if (isInitial) {
+                    const rawList = await fetchCandidatePlaces(state.area, searchCenter);
+                    document.getElementById('japan-mode-banner').classList.toggle('hidden', !state.isJapan);
+
+                    if (rawList.length === 0) {
+                        document.getElementById('secondary-filter-bar').classList.add('hidden');
+                        document.getElementById('roulette-fab').classList.add('hidden');
+                        document.getElementById('results-container').innerHTML = `
+                            <div class="col-span-full text-center py-16 bg-white rounded-3xl border border-stone-200 p-6">
+                                <div class="text-4xl mb-2">🥲</div>
+                                <h3 class="font-black text-stone-800 mb-1">此範圍內找不到符合標準的餐廳</h3>
+                                <p class="text-xs text-stone-500 mb-4">建議切換為「🚗 開車 5 公里」擴大範圍，或換個美食關鍵字試試！</p>
+                                <button type="button" onclick="setTransportMode('driving')" class="bg-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold">🚗 切換為 5 公里大範圍搜尋</button>
                             </div>
                         `;
-                        metaHeader.classList.add('hidden');
                         return;
                     }
 
-                    AppState.allRawPlaces = fetchedPlaces;
-                    sortRawCandidates();
+                    // 計算老饕貝氏加權分數並預排序
+                    candidatePlaces = rawList.map(p => {
+                        p._bayesian = calcBayesianScore(p.rating, p.user_ratings_total);
+                        return p;
+                    });
+                    sortCandidates();
                 }
 
-                await renderCardsBatch(reset);
+                // 分批載入詳細資料與步行時間
+                await loadMoreDetailsBatch(searchCenter);
 
             } catch (err) {
-                console.error("[Search Error]", err);
-                resultsGrid.innerHTML = `
-                    <div class="col-span-full p-4 rounded-2xl bg-rose-50 text-rose-700 text-xs text-center border border-rose-200">
-                        搜尋發生狀況：${escapeHtml(err.message || '請確認網路狀態或更換地區')}
-                    </div>
-                `;
+                document.getElementById('results-container').innerHTML = '';
+                if (state.area === 'current_location' && !currentUserLocation) {
+                    document.getElementById('results-container').innerHTML = `
+                        <div class="col-span-full text-center py-12 bg-amber-50 rounded-3xl border border-amber-200 p-6">
+                            <div class="text-3xl mb-2">📍</div>
+                            <h3 class="font-black text-amber-900 mb-1">無法使用自動定位</h3>
+                            <p class="text-xs text-amber-800 mb-4">瀏覽器目前阻擋了位置權限，請直接選擇一個行政區開始探索！</p>
+                            <button type="button" onclick="openBottomSheet('area')" class="bg-orange-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm">🗺️ 點此選擇搜尋地區</button>
+                        </div>
+                    `;
+                } else {
+                    showError(err.message || '搜尋發生錯誤，請稍後再試');
+                }
             }
         }
 
-        function fetchCandidatePlaces(area, loc) {
+        // 貝氏加權評分公式：兼顧高評分與高評論數
+        function calcBayesianScore(rating, reviews) {
+            const C = state.isJapan ? 3.6 : 4.1;
+            const m = 150;
+            const v = reviews || 0;
+            const R = rating || 0;
+            return (v / (v + m)) * R + (m / (v + m)) * C;
+        }
+
+        function sortCandidates() {
+            if (state.sortBy === 'bayesian') {
+                candidatePlaces.sort((a, b) => (b._bayesian || 0) - (a._bayesian || 0));
+            } else if (state.sortBy === 'reviews') {
+                candidatePlaces.sort((a, b) => (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
+            } else if (state.sortBy === 'distance') {
+                candidatePlaces.sort((a, b) => (a._straightDist || 999999) - (b._straightDist || 999999));
+            }
+        }
+
+        function fetchCandidatePlaces(area, centerLoc) {
             return new Promise(async (resolve, reject) => {
-                let requestConfig;
-                const keywordTerm = AppState.cuisine || '美食餐廳';
-                let thresholdRating = 4.0;
-                const japanBadge = document.getElementById('japan-mode-badge');
+                const keyword = state.cuisine || '餐廳 美食';
+                const centerLatLng = centerLoc instanceof google.maps.LatLng
+                    ? centerLoc
+                    : new google.maps.LatLng(centerLoc.lat, centerLoc.lng);
 
                 if (area === 'current_location') {
-                    if (!loc) return reject(new Error("無法取得定位資訊，請點選右上角「地點設定」選擇商圈"));
-
-                    AppState.searchCenterLocation = new google.maps.LatLng(loc.lat, loc.lng);
-
                     try {
-                        const geoResult = await resolveReverseGeocode(loc);
-                        AppState.isJapanRegion = geoResult.address_components?.some(c => c.short_name === 'JP') || false;
-                        if (AppState.isJapanRegion) {
-                            thresholdRating = 3.5;
-                            japanBadge.classList.remove('hidden');
-                            document.getElementById('current-region-badge').textContent = '🇯🇵 日本老饕模式 (3.5★門檻)';
-                        } else {
-                            japanBadge.classList.add('hidden');
-                            document.getElementById('current-region-badge').textContent = '📍 目前位置附近';
-                        }
+                        const rev = await reverseGeocode(centerLatLng);
+                        state.isJapan = rev.address_components.some(c => c.short_name === 'JP');
                     } catch (e) {
-                        console.warn("無法辨別區域國家代碼", e);
-                    }
-
-                    if (AppState.transportMode === 'walking') {
-                        requestConfig = {
-                            location: AppState.searchCenterLocation,
-                            rankBy: google.maps.places.RankBy.DISTANCE,
-                            keyword: keywordTerm
-                        };
-                    } else {
-                        requestConfig = {
-                            location: AppState.searchCenterLocation,
-                            radius: 5000,
-                            keyword: keywordTerm
-                        };
-                    }
-                } else {
-                    try {
-                        const geoTarget = await resolveForwardGeocode(area);
-                        AppState.isJapanRegion = geoTarget.isJapan;
-                        AppState.searchCenterLocation = geoTarget.location;
-
-                        if (AppState.isJapanRegion) {
-                            thresholdRating = 3.5;
-                            japanBadge.classList.remove('hidden');
-                            document.getElementById('current-region-badge').textContent = `🇯🇵 ${area}`;
-                        } else {
-                            japanBadge.classList.add('hidden');
-                            document.getElementById('current-region-badge').textContent = `📍 ${area}`;
-                        }
-
-                        const searchRadius = AppState.transportMode === 'walking' ? 1500 : 5000;
-                        requestConfig = {
-                            location: geoTarget.location,
-                            radius: searchRadius,
-                            keyword: `${area} ${keywordTerm}`
-                        };
-                    } catch (e) {
-                        return reject(e);
+                        state.isJapan = false;
                     }
                 }
 
-                let collectedPlaces = [];
-                let pageIteration = 0;
-                const refCenter = AppState.userLocation
-                    ? new google.maps.LatLng(AppState.userLocation.lat, AppState.userLocation.lng)
-                    : AppState.searchCenterLocation;
+                const minRating = state.isJapan ? 3.5 : 4.0;
+                const maxRadius = (area === 'current_location' && state.mode === 'walking') ? 1100 : 5000;
 
-                placesService.nearbySearch(requestConfig, (results, status, pagination) => {
+                const request = {
+                    location: centerLatLng,
+                    radius: maxRadius,
+                    keyword: area === 'current_location' ? keyword : `${area} ${keyword}`
+                };
+
+                let collected = [];
+                let pageCount = 0;
+
+                placesService.nearbySearch(request, (results, status, pagination) => {
                     if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                        const qualified = results.filter(p => {
-                            if ((p.rating || 0) < thresholdRating || (p.user_ratings_total || 0) < 8) return false;
-
-                            if (p.geometry?.location && refCenter) {
-                                const distMeters = google.maps.geometry.spherical.computeDistanceBetween(refCenter, p.geometry.location);
-                                p.linearDistanceMeters = distMeters;
-
-                                if (area === 'current_location') {
-                                    if (AppState.transportMode === 'walking' && distMeters > 1150) return false;
-                                    if (AppState.transportMode === 'driving' && distMeters > 5000) return false;
-                                }
+                        // 免費幾何直線距離過濾 + 評分門檻過濾
+                        const filtered = results.filter(p => {
+                            if (!p.rating || p.rating < minRating || (p.user_ratings_total || 0) < 10) return false;
+                            if (p.geometry && p.geometry.location) {
+                                const dist = google.maps.geometry.spherical.computeDistanceBetween(centerLatLng, p.geometry.location);
+                                p._straightDist = dist;
+                                if (area === 'current_location' && dist > maxRadius) return false;
                             }
-
-                            p.gourmetScore = computeGourmetScore(p, AppState.isJapanRegion);
                             return true;
                         });
 
-                        collectedPlaces = collectedPlaces.concat(qualified);
-                        pageIteration++;
+                        collected = collected.concat(filtered);
+                        pageCount++;
 
-                        if (pagination && pagination.hasNextPage && pageIteration < 3) {
+                        if (pagination && pagination.hasNextPage && pageCount < 2 && collected.length < 36) {
                             setTimeout(() => pagination.nextPage(), 1800);
                         } else {
-                            resolve(collectedPlaces);
+                            resolve(collected);
                         }
                     } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
                         resolve([]);
                     } else {
-                        if (pageIteration === 0) reject(new Error("搜尋服務回應：" + status));
-                        else resolve(collectedPlaces);
+                        if (pageCount === 0) reject(new Error('搜尋服務回應異常 (' + status + ')'));
+                        else resolve(collected);
                     }
                 });
             });
         }
 
-        /* ==========================================================================
-           分批並行驗證路線與詳情 (先算路線、通過才查詳情，省下 60%+ API 額度)
-           ========================================================================== */
-        async function renderCardsBatch(isReset = false) {
-            const resultsGrid = document.getElementById('results-grid');
-            const metaHeader = document.getElementById('results-meta-header');
-            
-            if (isReset) {
-                resultsGrid.innerHTML = '';
-            }
+        // 先驗證步行時間，通過才呼叫 getDetails (大幅節省 API 並自動補齊筆數)
+        async function loadMoreDetailsBatch(centerLoc) {
+            const centerLatLng = centerLoc
+                ? (centerLoc instanceof google.maps.LatLng ? centerLoc : new google.maps.LatLng(centerLoc.lat, centerLoc.lng))
+                : (currentUserLocation ? new google.maps.LatLng(currentUserLocation.lat, currentUserLocation.lng) : null);
 
-            let newlyAddedCount = 0;
-            while (newlyAddedCount < 6 && AppState.renderedCount < AppState.allRawPlaces.length) {
-                const currentBatch = AppState.allRawPlaces.slice(
-                    AppState.renderedCount,
-                    AppState.renderedCount + AppState.batchSize
-                );
-                AppState.renderedCount += currentBatch.length;
+            let newlyAdded = 0;
 
-                if (currentBatch.length === 0) break;
+            while (candidateCursor < candidatePlaces.length && newlyAdded < BATCH_TARGET) {
+                const slice = candidatePlaces.slice(candidateCursor, candidateCursor + 6);
+                candidateCursor += slice.length;
 
-                const processedList = await executeWithConcurrency(
-                    currentBatch,
-                    place => enrichPlaceDetails(place, AppState.userLocation),
-                    4
-                );
+                const processed = await Promise.all(slice.map(async (basicPlace) => {
+                    let distanceInfo = null;
 
-                const validList = processedList.filter(item => item !== null);
-                AppState.enrichedPlaces.push(...validList);
-                newlyAddedCount += validList.length;
+                    if (centerLatLng && basicPlace.geometry && basicPlace.geometry.location) {
+                        const straightMeters = basicPlace._straightDist || google.maps.geometry.spherical.computeDistanceBetween(centerLatLng, basicPlace.geometry.location);
 
-                if (AppState.transportMode !== 'walking' || AppState.area !== 'current_location') {
-                    break;
-                }
-            }
-
-            metaHeader.classList.remove('hidden');
-            updateResultsHeaderBadge();
-            applyClientFiltersAndRender();
-            updatePaginationUI();
-        }
-
-        function updateResultsHeaderBadge() {
-            const badge = document.getElementById('results-filter-badge');
-            if (AppState.isJapanRegion) {
-                badge.textContent = '🇯🇵 日本精選 (3.5★+)';
-                badge.className = 'bg-amber-50 text-amber-900 border border-amber-200/80 px-2 py-0.5 rounded-md font-bold text-xs';
-            } else {
-                badge.textContent = '老饕加權 (4.0★+)';
-                badge.className = 'bg-orange-50 text-orange-700 border border-orange-200/70 px-2 py-0.5 rounded-md font-bold text-xs';
-            }
-        }
-
-        async function executeWithConcurrency(items, asyncFn, limit = 4) {
-            const results = [];
-            const executing = [];
-            for (const item of items) {
-                const p = Promise.resolve().then(() => asyncFn(item));
-                results.push(p);
-                if (limit <= items.length) {
-                    const e = p.then(() => executing.splice(executing.indexOf(e), 1));
-                    executing.push(e);
-                    if (executing.length >= limit) {
-                        await Promise.race(executing);
+                        if (state.area === 'current_location' && state.mode === 'walking') {
+                            const route = await getWalkingRouteCached(centerLatLng, basicPlace.geometry.location, basicPlace.place_id);
+                            if (!route || route.value > 660) {
+                                return null; // 超過約 10~11 分鐘步行距離，直接淘汰不呼叫 getDetails
+                            }
+                            distanceInfo = route;
+                        } else {
+                            const text = straightMeters >= 1000 ? (straightMeters / 1000).toFixed(1) + ' km' : Math.round(straightMeters) + ' m';
+                            distanceInfo = { text: `${text} (直線)`, value: straightMeters };
+                        }
                     }
-                }
+
+                    const detail = await getPlaceDetailsCached(basicPlace.place_id);
+                    if (!detail) return null;
+
+                    detail._bayesian = basicPlace._bayesian || calcBayesianScore(detail.rating, detail.user_ratings_total);
+                    detail._straightDist = basicPlace._straightDist || 0;
+                    detail.distanceData = distanceInfo;
+                    placeDataMap[detail.place_id] = detail;
+                    return detail;
+                }));
+
+                const validOnes = processed.filter(Boolean);
+                loadedDetailedPlaces = loadedDetailedPlaces.concat(validOnes);
+                newlyAdded += validOnes.length;
             }
-            return Promise.all(results);
+
+            renderDisplayedResults();
         }
 
-        async function enrichPlaceDetails(place, userLoc) {
-            const travelInfo = await evaluateTravelDistance(place, userLoc);
-            if (travelInfo === false) {
-                return null;
-            }
-
-            if (AppState.detailsCache.has(place.place_id)) {
-                const cached = AppState.detailsCache.get(place.place_id);
-                cached.travelInfo = travelInfo;
-                cached.gourmetScore = place.gourmetScore;
-                cached.linearDistanceMeters = place.linearDistanceMeters;
-                return cached;
-            }
-
-            return new Promise(resolve => {
-                placesService.getDetails({
-                    placeId: place.place_id,
-                    fields: ['name', 'rating', 'user_ratings_total', 'formatted_address', 'photos', 'place_id', 'opening_hours', 'url', 'price_level', 'geometry', 'types', 'formatted_phone_number']
-                }, (detail, status) => {
-                    if (status === google.maps.places.PlacesServiceStatus.OK && detail) {
-                        detail.travelInfo = travelInfo;
-                        detail.gourmetScore = place.gourmetScore;
-                        detail.linearDistanceMeters = place.linearDistanceMeters;
-                        AppState.detailsCache.set(place.place_id, detail);
-                        resolve(detail);
-                    } else {
-                        const fallback = {
-                            ...place,
-                            formatted_address: place.vicinity || '',
-                            travelInfo
-                        };
-                        resolve(fallback);
-                    }
-                });
-            });
-        }
-
-        async function evaluateTravelDistance(place, userLoc) {
-            const locObj = place.geometry?.location;
-            if (!locObj) return null;
-
-            const originRef = userLoc
-                ? new google.maps.LatLng(userLoc.lat, userLoc.lng)
-                : AppState.searchCenterLocation;
-
-            if (!originRef) return null;
-
-            const linearDistanceMeters = place.linearDistanceMeters ?? google.maps.geometry.spherical.computeDistanceBetween(originRef, locObj);
-            place.linearDistanceMeters = linearDistanceMeters;
-
-            if (AppState.area === 'current_location' && userLoc) {
-                if (AppState.transportMode === 'walking') {
-                    if (linearDistanceMeters > 1150) return false;
-
-                    const routeResult = await queryWalkingRoute(originRef, locObj, place.place_id);
-                    if (routeResult && routeResult.seconds <= 600) {
-                        return {
-                            text: `${routeResult.distanceText}・${routeResult.durationText}`,
-                            isWalking: true
-                        };
-                    }
-                    return false;
+        // ==========================================
+        // 7. 二次篩選、排序與卡片渲染
+        // ==========================================
+        window.setSortMode = function(sortMode) {
+            state.sortBy = sortMode;
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                if (btn.getAttribute('data-sort') === sortMode) {
+                    btn.className = 'sort-btn px-2.5 py-1 rounded-md text-xs font-bold bg-stone-900 text-white transition-all';
                 } else {
-                    if (linearDistanceMeters > 5000) return false;
-                    const distFormatted = linearDistanceMeters >= 1000 
-                        ? (linearDistanceMeters / 1000).toFixed(1) + ' km' 
-                        : Math.round(linearDistanceMeters) + ' m';
-                    return { text: `${distFormatted} (直線)`, isWalking: false };
+                    btn.className = 'sort-btn px-2.5 py-1 rounded-md text-xs font-bold text-stone-600 hover:bg-stone-100 transition-all';
                 }
+            });
+            renderDisplayedResults();
+        };
+
+        window.toggleFilterOpenNow = function() {
+            state.onlyOpenNow = !state.onlyOpenNow;
+            const btn = document.getElementById('filter-open-btn');
+            if (state.onlyOpenNow) {
+                btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition-all flex items-center gap-1';
             } else {
-                const distFormatted = linearDistanceMeters >= 1000 
-                    ? (linearDistanceMeters / 1000).toFixed(1) + ' km' 
-                    : Math.round(linearDistanceMeters) + ' m';
-                return { text: `${distFormatted}`, isWalking: false };
+                btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold border border-stone-200 bg-white text-stone-600 transition-all flex items-center gap-1';
             }
-        }
+            renderDisplayedResults();
+        };
 
-        function queryWalkingRoute(origin, destination, placeId) {
-            if (placeId && AppState.routeCache.has(placeId)) {
-                return Promise.resolve(AppState.routeCache.get(placeId));
+        window.toggleViewMode = function() {
+            state.compactView = !state.compactView;
+            const btn = document.getElementById('view-mode-btn');
+            btn.textContent = state.compactView ? '🖼️ 大圖卡片' : '📑 緊湊清單';
+            renderDisplayedResults();
+        };
+
+        function renderDisplayedResults() {
+            const container = document.getElementById('results-container');
+            const filterBar = document.getElementById('secondary-filter-bar');
+            const rouletteFab = document.getElementById('roulette-fab');
+
+            if (loadedDetailedPlaces.length > 0) {
+                filterBar.classList.remove('hidden');
+                rouletteFab.classList.remove('hidden');
             }
-            return new Promise(resolve => {
-                directionsService.route({
-                    origin,
-                    destination,
-                    travelMode: google.maps.TravelMode.WALKING
-                }, (response, status) => {
-                    if (status === google.maps.DirectionsStatus.OK && response?.routes?.[0]?.legs?.[0]) {
-                        const leg = response.routes[0].legs[0];
-                        const routeData = {
-                            distanceText: leg.distance.text,
-                            durationText: leg.duration.text,
-                            seconds: leg.duration.value
-                        };
-                        if (placeId) AppState.routeCache.set(placeId, routeData);
-                        resolve(routeData);
-                    } else {
-                        resolve(null);
-                    }
+
+            let list = [...loadedDetailedPlaces];
+
+            // 僅看營業中過濾
+            if (state.onlyOpenNow) {
+                list = list.filter(p => {
+                    try { return p.opening_hours && p.opening_hours.isOpen(); }
+                    catch (e) { return true; }
                 });
-            });
+            }
+
+            // 排序
+            if (state.sortBy === 'bayesian') {
+                list.sort((a, b) => (b._bayesian || 0) - (a._bayesian || 0));
+            } else if (state.sortBy === 'reviews') {
+                list.sort((a, b) => (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
+            } else if (state.sortBy === 'distance') {
+                list.sort((a, b) => {
+                    const da = a.distanceData ? a.distanceData.value : (a._straightDist || 999999);
+                    const db = b.distanceData ? b.distanceData.value : (b._straightDist || 999999);
+                    return da - db;
+                });
+            }
+
+            container.className = state.compactView
+                ? 'grid grid-cols-1 md:grid-cols-2 gap-2.5'
+                : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white rounded-2xl border border-stone-200 p-6">
+                        <p class="text-sm font-bold text-stone-600 mb-2">目前篩選條件下沒有符合的店家</p>
+                        ${state.onlyOpenNow ? `<button type="button" onclick="toggleFilterOpenNow()" class="text-xs font-bold text-orange-600 underline">取消「僅看營業中」過濾</button>` : ''}
+                    </div>
+                `;
+            } else {
+                list.forEach((place, idx) => {
+                    container.appendChild(createRestaurantCard(place, idx));
+                });
+            }
+
+            // 更新分頁按鈕
+            const pageBox = document.getElementById('pagination-container');
+            pageBox.innerHTML = '';
+            if (candidateCursor < candidatePlaces.length) {
+                const moreBtn = document.createElement('button');
+                moreBtn.type = 'button';
+                moreBtn.className = 'bg-white hover:bg-orange-50 border border-stone-300 text-stone-700 font-bold px-8 py-3 rounded-full shadow-sm text-xs active:scale-95 transition-all';
+                moreBtn.textContent = `載入更多好店 (已探索 ${candidateCursor}/${candidatePlaces.length})`;
+                moreBtn.onclick = async () => {
+                    moreBtn.textContent = '載入中...';
+                    moreBtn.disabled = true;
+                    await loadMoreDetailsBatch();
+                };
+                pageBox.appendChild(moreBtn);
+            }
         }
 
-        function resolveForwardGeocode(address) {
-            return new Promise((resolve, reject) => {
-                if (AppState.geocodeCache.has(address)) {
-                    return resolve(AppState.geocodeCache.get(address));
+        function createRestaurantCard(p, idx) {
+            placeDataMap[p.place_id] = p;
+            const isFav = isPlaceFavorited(p.place_id);
+            const photoUrl = p.photos?.[0]?.getUrl({ maxWidth: 500, maxHeight: 360 }) || 'https://placehold.co/500x360/f5f5f4/a8a29e?text=美食探險家';
+
+            let isOpen = undefined;
+            try {
+                if (p.opening_hours && typeof p.opening_hours.isOpen === 'function') {
+                    isOpen = p.opening_hours.isOpen();
                 }
-                geocoder.geocode({ address }, (results, status) => {
-                    if (status === 'OK' && results[0]) {
-                        const isJapan = results[0].address_components?.some(c => c.short_name === 'JP') || false;
-                        const data = { location: results[0].geometry.location, isJapan };
-                        AppState.geocodeCache.set(address, data);
-                        resolve(data);
-                    } else {
-                        reject(new Error("找不到該地區座標，請嘗試輸入更具體的商圈名稱"));
-                    }
-                });
-            });
-        }
+            } catch (e) {}
 
-        function resolveReverseGeocode(coords) {
-            return new Promise((resolve, reject) => {
-                geocoder.geocode({ location: coords }, (results, status) => {
-                    if (status === 'OK' && results[0]) {
-                        resolve(results[0]);
-                    } else {
-                        reject(status);
-                    }
-                });
-            });
-        }
+            const statusBadge = isOpen === true
+                ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">營業中</span>`
+                : (isOpen === false ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-200 text-stone-600">休息中</span>` : '');
 
-        /* ==========================================================================
-           卡片元件渲染（支援大圖雜誌 / 緊湊清單 + 日本 Tabelog 一鍵查驗 + 原生分享）
-           ========================================================================== */
-        function createRestaurantCard(p, index, isFavoriteItem = false) {
+            const priceMap = ['', '$ 平價', '$$ 中價位', '$$$ 高價位', '$$$$ 奢華'];
+            const priceBadge = p.price_level ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700">${priceMap[p.price_level]}</span>` : '';
+
+            // 行銷活動警示 (評分 > 4.8 且 評論數 > 1000)
+            const hasMarketingAlert = p.rating > 4.8 && p.user_ratings_total > 1000;
+            const marketingBadge = hasMarketingAlert
+                ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200" title="分數極高且評論破千，可能含有打卡送餐點活動">⚠️ 行銷熱店</span>`
+                : '';
+
+            const distBadge = p.distanceData
+                ? `<span class="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200/60 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
+                    <span>${state.mode === 'walking' ? '🚶' : '🚗'}</span>${p.distanceData.text}
+                   </span>`
+                : '';
+
+            // 日本 Tabelog 快速查驗按鈕
+            const tabelogBtn = state.isJapan
+                ? `<a href="https://tabelog.com/rstLst/?vs=1&sk=${encodeURIComponent(p.name)}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1">🍽️ Tabelog</a>`
+                : '';
+
             const card = document.createElement('div');
-            const isCompact = AppState.displayMode === 'compact';
-            
-            card.style.animationDelay = `${(index % 10) * 35}ms`;
+            card.style.animationDelay = `${Math.min(idx * 40, 240)}ms`;
 
-            const photoUrl = p.photoUrl || p.photos?.[0]?.getUrl({ maxWidth: 450, maxHeight: 300 }) || 'https://placehold.co/400x260/f5f5f4/78716c?text=美味餐廳';
-            const isFav = AppState.favorites.some(f => f.place_id === p.place_id);
-            const safeName = escapeHtml(p.name);
-            const safeAddress = escapeHtml(p.formatted_address || p.vicinity || '未提供完整地址');
-
-            let statusTagHtml = '';
-            const isOpen = getPlaceOpenStatus(p);
-            if (isOpen !== undefined) {
-                const statusBadge = isOpen 
-                    ? '<span class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-600 text-white shadow-sm">營業中</span>'
-                    : '<span class="text-xs font-bold px-2 py-0.5 rounded-md bg-stone-700 text-white shadow-sm">休息中</span>';
-                
-                let todaySchedule = '';
-                if (p.opening_hours?.weekday_text) {
-                    const todayIdx = (new Date().getDay() + 6) % 7;
-                    todaySchedule = (p.opening_hours.weekday_text[todayIdx] || '').split(': ')[1] || '';
-                }
-
-                statusTagHtml = `
-                    <div class="flex items-center gap-1.5">
-                        ${statusBadge}
-                        ${todaySchedule ? `<span class="text-xs text-white/95 font-medium bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">${escapeHtml(todaySchedule)}</span>` : ''}
-                    </div>
-                `;
-            }
-
-            const priceLevels = ['', '平價銅板', '中等價位', '精緻高價', '頂級饗宴'];
-            const priceLabel = priceLevels[p.price_level] || '';
-
-            const typeLabels = {
-                cafe: '咖啡簡餐', restaurant: '精選餐廳', bar: '放鬆酒吧', bakery: '手作烘焙',
-                meal_takeaway: '外帶美食', food: '特色美食'
-            };
-            let categoryText = '';
-            if (p.types) {
-                for (let t of p.types) {
-                    if (typeLabels[t]) { categoryText = typeLabels[t]; break; }
-                }
-            }
-
-            let marketingAlertHtml = '';
-            if (!AppState.isJapanRegion && p.rating > 4.8 && p.user_ratings_total > 1000) {
-                marketingAlertHtml = `
-                    <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200/80" title="高分且評論破千，可能含有五星打卡送食材活動，建議搭配最新評論參考">
-                        <span>📢</span>
-                        <span>打卡活動疑慮</span>
-                    </div>
-                `;
-            }
-
-            const showTabelog = AppState.isJapanRegion || p.isJapan || (p.formatted_address && (p.formatted_address.includes('日本') || p.formatted_address.includes('Japan')));
-            const tabelogUrl = `https://www.google.com/search?q=${encodeURIComponent(p.name + ' 食べログ Tabelog')}`;
-            const mapLink = p.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.name)}&query_place_id=${p.place_id}`;
-
-            if (isCompact) {
-                card.className = "bg-white rounded-2xl border border-stone-200/80 shadow-sm p-3 flex gap-3 animate-card transition-shadow hover:shadow-md";
+            // 緊湊清單模式
+            if (state.compactView) {
+                card.className = 'bg-white rounded-2xl p-3 shadow-xs border border-stone-200/80 flex gap-3 items-center card-enter';
                 card.innerHTML = `
-                    <div class="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-stone-100">
-                        <img src="${photoUrl}" alt="${safeName}" loading="lazy" class="w-full h-full object-cover">
-                        <button onclick="toggleFavorite('${p.place_id}', event)" data-fav-btn="${p.place_id}" class="tap-active absolute top-1 right-1 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-xs">
-                            ${isFav ? '❤️' : '🤍'}
-                        </button>
-                    </div>
-
-                    <div class="flex-1 min-w-0 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-start justify-between gap-1.5 mb-1">
-                                <h3 class="text-sm font-bold text-stone-900 truncate leading-snug flex-1">${safeName}</h3>
-                                <div class="flex items-center gap-0.5 bg-amber-500 text-white px-1.5 py-0.5 rounded-md flex-shrink-0 text-xs font-black shadow-sm">
-                                    <span>★</span>
-                                    <span>${p.rating ? p.rating.toFixed(1) : '–'}</span>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-1.5 flex-wrap text-xs text-stone-500 mb-1.5">
-                                <span>${p.user_ratings_total || 0} 則評論</span>
-                                ${priceLabel ? `<span class="text-stone-300">·</span><span class="text-stone-600 font-semibold">${priceLabel}</span>` : ''}
-                                ${marketingAlertHtml}
-                            </div>
+                    <a href="${p.url}" target="_blank" class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-stone-100 block">
+                        <img src="${photoUrl}" class="w-full h-full object-cover" loading="lazy" alt="">
+                    </a>
+                    <div class="flex-grow min-w-0">
+                        <div class="flex items-start justify-between gap-1">
+                            <a href="${p.url}" target="_blank" class="text-sm font-black text-stone-900 truncate hover:text-orange-600">${p.name}</a>
+                            <button type="button" onclick="toggleFavoriteById('${p.place_id}', this)" class="text-sm flex-shrink-0 px-1">${isFav ? '❤️' : '🤍'}</button>
                         </div>
-
-                        <div class="flex items-center justify-between pt-1 border-t border-stone-100 text-xs gap-1">
-                            ${p.travelInfo ? `
-                                <div class="inline-flex items-center gap-1 font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded truncate">
-                                    <span>${p.travelInfo.isWalking ? '🚶' : '🚗'}</span>
-                                    <span>${escapeHtml(p.travelInfo.text)}</span>
-                                </div>
-                            ` : `<span class="text-stone-400 truncate max-w-[110px] text-xs">📍 ${safeAddress}</span>`}
-
-                            <div class="flex items-center gap-1 flex-shrink-0">
-                                ${showTabelog ? `
-                                    <a href="${tabelogUrl}" target="_blank" rel="noopener noreferrer" class="tap-active px-2 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-xs" title="在 Tabelog 查看評價">
-                                        🍽️ Tabelog
-                                    </a>
-                                ` : ''}
-                                <button onclick="handleSharePlace('${p.place_id}', event)" class="tap-active p-1.5 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200" title="分享給朋友">
-                                    💬
-                                </button>
-                                <button onclick="handleCopyAddress('${p.place_id}', event)" class="tap-active p-1.5 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200" title="複製地址">
-                                    📋
-                                </button>
-                                <a href="${mapLink}" target="_blank" rel="noopener noreferrer" class="tap-active text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-2.5 py-1 rounded-lg">
-                                    導航
-                                </a>
+                        <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                            <span class="text-xs font-extrabold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">★ ${p.rating}</span>
+                            <span class="text-xs text-stone-500">(${p.user_ratings_total})</span>
+                            ${statusBadge}
+                            ${marketingBadge}
+                        </div>
+                        <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-stone-100">
+                            ${distBadge || `<span class="text-xs text-stone-400 truncate">${p.formatted_address || ''}</span>`}
+                            <div class="flex items-center gap-1.5">
+                                ${tabelogBtn}
+                                <button type="button" onclick="sharePlaceById('${p.place_id}')" class="px-2 py-1 rounded-lg bg-stone-100 text-stone-700 text-xs font-bold">分享</button>
+                                <a href="${p.url}" target="_blank" class="px-2.5 py-1 rounded-lg bg-orange-600 text-white text-xs font-bold">導航</a>
                             </div>
                         </div>
                     </div>
@@ -1854,48 +1043,297 @@
                 return card;
             }
 
-            card.className = "bg-white rounded-2xl border border-stone-200/90 shadow-sm overflow-hidden flex flex-col animate-card transition-shadow hover:shadow-md";
+            // 標準大圖卡片模式
+            card.className = 'bg-white rounded-2xl shadow-xs border border-stone-200/80 overflow-hidden flex flex-col card-enter hover:shadow-md transition-shadow';
             card.innerHTML = `
-                <div class="relative aspect-video w-full bg-stone-100 overflow-hidden">
-                    <img src="${photoUrl}" alt="${safeName}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
-                    
-                    <div class="absolute inset-x-3 top-3 flex items-center justify-between">
-                        <div class="flex items-center gap-1">
-                            ${statusTagHtml}
-                        </div>
-                        <button onclick="toggleFavorite('${p.place_id}', event)" data-fav-btn="${p.place_id}" class="tap-active w-8 h-8 rounded-full bg-white/95 backdrop-blur-md shadow-md flex items-center justify-center text-sm transition-transform">
-                            ${isFav ? '❤️' : '🤍'}
-                        </button>
+                <div class="relative aspect-16/10 bg-stone-100 overflow-hidden">
+                    <a href="${p.url}" target="_blank" class="block w-full h-full">
+                        <img src="${photoUrl}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" alt="">
+                    </a>
+                    <div class="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
+                        ${statusBadge}
+                        ${priceBadge}
+                        ${marketingBadge}
                     </div>
-
-                    ${priceLabel ? `<span class="absolute bottom-2.5 right-3 text-xs font-bold text-white bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded">${priceLabel}</span>` : ''}
+                    <button type="button" onclick="toggleFavoriteById('${p.place_id}', this)" class="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs shadow-sm flex items-center justify-center text-sm active:scale-90 transition-transform">
+                        ${isFav ? '❤️' : '🤍'}
+                    </button>
                 </div>
-
-                <div class="p-3.5 flex flex-col flex-1">
-                    
-                    <div class="flex items-start justify-between gap-2 mb-1">
-                        <div class="flex-1 min-w-0">
-                            ${categoryText ? `<span class="text-xs font-bold text-orange-600 block mb-0.5">${categoryText}</span>` : ''}
-                            <h3 class="text-base font-bold text-stone-900 truncate leading-snug">${safeName}</h3>
-                        </div>
-                        
-                        <div class="flex items-center gap-1 bg-amber-500 text-white px-2 py-0.5 rounded-lg flex-shrink-0 text-xs font-black shadow-sm">
-                            <span>★</span>
-                            <span>${p.rating ? p.rating.toFixed(1) : '–'}</span>
+                <div class="p-4 flex flex-col flex-grow">
+                    <div class="flex justify-between items-start gap-2 mb-1">
+                        <a href="${p.url}" target="_blank" class="text-base font-black text-stone-900 hover:text-orange-600 leading-snug line-clamp-1">${p.name}</a>
+                        <div class="flex items-center gap-1 bg-amber-50 border border-amber-200/70 px-2 py-0.5 rounded-lg flex-shrink-0">
+                            <span class="text-amber-500 text-xs">★</span>
+                            <span class="text-stone-800 text-xs font-extrabold">${p.rating}</span>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between gap-2 mb-2 text-xs">
-                        <span class="text-stone-400 font-medium">(${p.user_ratings_total || 0} 則 Google 評論)</span>
-                        
-                        ${p.travelInfo ? `
-                            <div class="inline-flex items-center gap-1 font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200/60">
-                                <span>${p.travelInfo.isWalking ? '🚶' : '🚗'}</span>
-                                <span>${escapeHtml(p.travelInfo.text)}</span>
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <span class="text-xs font-medium text-stone-500">${(p.user_ratings_total || 0).toLocaleString()} 則評論</span>
+                        ${distBadge}
+                    </div>
+
+                    <div class="mt-auto pt-3 border-t border-stone-100 space-y-2.5 text-xs text-stone-600">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="truncate text-stone-500">📍 ${p.formatted_address || ''}</span>
+                            <button type="button" onclick="copyTextById('${p.place_id}')" class="text-stone-400 hover:text-stone-700 flex-shrink-0 font-bold">複製</button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-1.5 pt-1">
+                            <div class="flex items-center gap-1.5">
+                                ${p.formatted_phone_number ? `<a href="tel:${p.formatted_phone_number}" class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold">📞 電話</a>` : ''}
+                                <button type="button" onclick="sharePlaceById('${p.place_id}')" class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold">💬 分享</button>
+                                ${tabelogBtn}
                             </div>
-                        ` : ''}
+                            <a href="${p.url}" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold shadow-xs">🗺️ Google 導航</a>
+                        </div>
                     </div>
+                </div>
+            `;
+            return card;
+        }
 
-                    ${marketingAlertHtml ? `<div class="mb-2">${marketingAlertHtml}</div>` : ''}
+        // ==========================================
+        // 8. 收藏夾、分享、隨機輪盤與輔助工具
+        // ==========================================
+        function isPlaceFavorited(placeId) {
+            const favs = safeStorage.get('fe_favorites', []);
+            return favs.some(f => f.place_id === placeId);
+        }
 
-                    <div class="mt-auto pt-2.5 border-t border-stone-100 space-y-2 text
+        window.toggleFavoriteById = function(placeId, btnEl) {
+            const place = placeDataMap[placeId];
+            let favs = safeStorage.get('fe_favorites', []);
+            const exists = favs.some(f => f.place_id === placeId);
+
+            if (exists) {
+                favs = favs.filter(f => f.place_id !== placeId);
+                if (btnEl) btnEl.textContent = '🤍';
+                showToast('已從收藏移除');
+            } else if (place) {
+                const simplified = {
+                    place_id: place.place_id,
+                    name: place.name,
+                    rating: place.rating,
+                    user_ratings_total: place.user_ratings_total,
+                    formatted_address: place.formatted_address,
+                    formatted_phone_number: place.formatted_phone_number,
+                    url: place.url,
+                    price_level: place.price_level,
+                    photoUrl: place.photos?.[0]?.getUrl({ maxWidth: 500, maxHeight: 360 }) || ''
+                };
+                favs.unshift(simplified);
+                if (btnEl) btnEl.textContent = '❤️';
+                showToast('❤️ 已加入口袋收藏！');
+            }
+            safeStorage.set('fe_favorites', favs);
+            updateFavBadge();
+            if (state.activeTab === 'favorites') renderFavoritesList();
+        };
+
+        function updateFavBadge() {
+            const favs = safeStorage.get('fe_favorites', []);
+            const badge = document.getElementById('fav-count-badge');
+            if (badge) badge.textContent = favs.length;
+        }
+
+        window.switchTab = function(tab) {
+            state.activeTab = tab;
+            const exploreSec = document.getElementById('explore-section');
+            const favSec = document.getElementById('favorites-section');
+            const filterBar = document.getElementById('secondary-filter-bar');
+
+            if (tab === 'favorites') {
+                exploreSec.classList.add('hidden');
+                filterBar.classList.add('hidden');
+                favSec.classList.remove('hidden');
+                renderFavoritesList();
+            } else {
+                favSec.classList.add('hidden');
+                exploreSec.classList.remove('hidden');
+                if (loadedDetailedPlaces.length > 0) filterBar.classList.remove('hidden');
+            }
+        };
+
+        function renderFavoritesList() {
+            const container = document.getElementById('favorites-container');
+            const favs = safeStorage.get('fe_favorites', []);
+            container.innerHTML = '';
+
+            if (favs.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-16 bg-white rounded-3xl border border-stone-200 p-6">
+                        <div class="text-3xl mb-2">🤍</div>
+                        <p class="text-sm font-bold text-stone-700 mb-1">尚未收藏任何餐廳</p>
+                        <p class="text-xs text-stone-400">在搜尋結果點擊卡片右上角的愛心，即可隨時保存口袋名單！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            favs.forEach((f, idx) => {
+                placeDataMap[f.place_id] = f;
+                const mockPlace = {
+                    ...f,
+                    photos: f.photoUrl ? [{ getUrl: () => f.photoUrl }] : []
+                };
+                container.appendChild(createRestaurantCard(mockPlace, idx));
+            });
+        }
+
+        window.copyTextById = function(placeId) {
+            const p = placeDataMap[placeId];
+            if (!p) return;
+            const text = `${p.name} - ${p.formatted_address || ''}`;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => showToast('📋 已複製店名與地址'));
+            } else {
+                showToast('📋 ' + text);
+            }
+        };
+
+        window.sharePlaceById = function(placeId) {
+            const p = placeDataMap[placeId];
+            if (!p) return;
+            const shareText = `🍽️ ${p.name} (★${p.rating} / ${p.user_ratings_total}則評論)\n📍 ${p.formatted_address || ''}\n🗺️ ${p.url}`;
+            if (navigator.share) {
+                navigator.share({ title: p.name, text: shareText, url: p.url }).catch(() => {});
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareText).then(() => showToast('💬 已複製餐廳資訊，可直接貼上 LINE 分享！'));
+            }
+        };
+
+        // 隨機選店輪盤
+        window.openRoulette = function() {
+            if (loadedDetailedPlaces.length === 0) {
+                showToast('請先搜尋餐廳後再使用抽籤功能');
+                return;
+            }
+            document.getElementById('roulette-modal').classList.remove('hidden');
+            spinRoulette();
+        };
+
+        window.closeRoulette = function() {
+            document.getElementById('roulette-modal').classList.add('hidden');
+        };
+
+        window.spinRoulette = function() {
+            if (loadedDetailedPlaces.length === 0) return;
+            const pick = loadedDetailedPlaces[Math.floor(Math.random() * loadedDetailedPlaces.length)];
+            const box = document.getElementById('roulette-result-box');
+            const navLink = document.getElementById('roulette-nav-link');
+            box.innerHTML = `
+                <div class="font-black text-base text-stone-900 mb-1">${pick.name}</div>
+                <div class="text-xs font-bold text-amber-600 mb-1">★ ${pick.rating} (${pick.user_ratings_total} 則評論)</div>
+                <div class="text-xs text-stone-500 truncate">📍 ${pick.formatted_address || ''}</div>
+            `;
+            navLink.href = pick.url || '#';
+        };
+
+        // ==========================================
+        // 9. API 快取封裝函式
+        // ==========================================
+        function geocodeAddress(address) {
+            if (geocodeCache[address]) return Promise.resolve(geocodeCache[address]);
+            return new Promise((resolve, reject) => {
+                geocoder.geocode({ address }, (results, status) => {
+                    if (status === 'OK' && results[0]) {
+                        const isJapan = results[0].address_components.some(c => c.short_name === 'JP');
+                        const data = { location: results[0].geometry.location, isJapan };
+                        geocodeCache[address] = data;
+                        resolve(data);
+                    } else {
+                        reject(new Error('找不到「' + address + '」這個地區，請嘗試輸入更明確的行政區'));
+                    }
+                });
+            });
+        }
+
+        function reverseGeocode(latLng) {
+            return new Promise((resolve, reject) => {
+                geocoder.geocode({ location: latLng }, (results, status) => {
+                    if (status === 'OK' && results[0]) resolve(results[0]);
+                    else reject(status);
+                });
+            });
+        }
+
+        function getPlaceDetailsCached(placeId) {
+            if (detailsCache[placeId]) return Promise.resolve(detailsCache[placeId]);
+            return new Promise(resolve => {
+                placesService.getDetails({
+                    placeId,
+                    fields: ['name', 'rating', 'user_ratings_total', 'formatted_address', 'photos', 'place_id', 'opening_hours', 'url', 'price_level', 'geometry', 'types', 'formatted_phone_number']
+                }, (detail, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && detail) {
+                        detailsCache[placeId] = detail;
+                        resolve(detail);
+                    } else {
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        function getWalkingRouteCached(origin, destination, placeId) {
+            if (routeCache[placeId]) return Promise.resolve(routeCache[placeId]);
+            return new Promise(resolve => {
+                directionsService.route({
+                    origin,
+                    destination,
+                    travelMode: 'WALKING'
+                }, (result, status) => {
+                    if (status === 'OK' && result.routes[0]?.legs[0]) {
+                        const leg = result.routes[0].legs[0];
+                        const data = { text: `${leg.distance.text}・${leg.duration.text}`, value: leg.duration.value };
+                        routeCache[placeId] = data;
+                        resolve(data);
+                    } else {
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        function showLoadingSkeleton() {
+            const container = document.getElementById('results-container');
+            container.innerHTML = Array(6).fill(0).map(() => `
+                <div class="bg-white rounded-2xl border border-stone-200 overflow-hidden h-72 animate-pulse flex flex-col">
+                    <div class="bg-stone-200 h-40 w-full"></div>
+                    <div class="p-4 space-y-3 flex-grow">
+                        <div class="h-4 bg-stone-200 rounded w-3/4"></div>
+                        <div class="h-3 bg-stone-200 rounded w-1/2"></div>
+                        <div class="h-8 bg-stone-100 rounded-xl w-full mt-auto"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 滾動控制與回到頂部
+        window.scrollToTop = function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.addEventListener('scroll', () => {
+            const topBtn = document.getElementById('back-to-top-btn');
+            if (topBtn) {
+                topBtn.classList.toggle('hidden', window.scrollY <= 320);
+            }
+        }, { passive: true });
+
+        // 監聽手動搜尋框輸入變化以顯示清除鈕
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('custom-cuisine-input');
+            const clearBtn = document.getElementById('clear-cuisine-btn');
+            if (input && clearBtn) {
+                input.addEventListener('input', () => {
+                    clearBtn.classList.toggle('hidden', !input.value.trim());
+                });
+            }
+        });
+    </script>
+
+    <!-- 載入 Google Maps JS API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-Ev8iMdRHstXwwFL2L6JpghYzgGsbiqY&libraries=places,geometry&callback=initMap&language=zh-TW" async defer></script>
+</body>
+</html>
